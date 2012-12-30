@@ -1,0 +1,94 @@
+main: com.amoebaman.gamemaster.GameMaster
+
+name: GameMaster
+version: 2.1
+depend: [KitMaster, TagAPI]
+loadbefore: [CommandBook]
+author: AmoebaMan
+description: Schedules and runs autonomous events/minigames
+
+commands:
+  game:
+    aliases: [g]
+    description: Displays the status of the current game
+    usage: /game
+  vote:
+    aliases: [v, votenext]
+    description: Votes for the next game
+    usage: /votenext <game>
+  charges:
+    aliases: [c, charge]
+    description: Shows information about charges
+    usage: /charges [sub-cmd]
+  teamchat:
+    aliases: [team]
+    description: Toggles team-exclusive chat on or off
+    usage: /teamchat
+  fixme:
+    aliases: [fix, unstuck]
+    description: Fixes players stuck in blocks
+    usage: /fixme
+    
+  enter:
+    description: Enters the game
+    usage: /enter
+  spectate:
+    description: Enters spectation mode
+    usage: /spectate
+    permission: gamemaster.spectate
+  exit:
+    description: Exits the game
+    usage: /exit
+    permission: gamemaster.exit
+    
+    
+  endgame:
+    aliases: [end]
+    description: Ends the current game
+    usage: /endgame
+    permission: gamemaster.admin
+  nextgame:
+    description: Sets the next game to be played
+    usage: /nextgame <game>
+    permission: gamemaster.admin
+  nextmap:
+    description: Sets the next map to be played
+    usage: /nextmap <map>
+    permission: gamemaster.admin
+    
+  patch:
+    description: Restarts the server for a patch
+    usage: /patch
+    permission: gamemaster.admin
+  gm-debug-cycle:
+    description: Signals the plugin to print debugging info for once cycle of its recurring ops
+    usage: /gm-debug-cycle
+    permission: gamemaster.admin
+  setwait:
+    description: Sets the waiting room
+    permission: gamemaster.admin
+  swapteam:
+    aliases: [s, swap]
+    description: Swaps the given player's team
+    usage: /swapteam [player]
+    permission: gamemaster.swap
+  balanceteams:
+    aliases: [balance]
+    description: Toggles automatic team balancing
+    usage: /balanceteams
+    permission: gamemaster.admin
+    
+    
+permissions:
+  gamemaster.globalkit:
+    description: Allows users to take kits from anywhere in the map
+  gamemaster.autoexit:
+    description: Allows joining players to automatically exit
+    children:
+      gamemaster.exit: true
+  gamemaster.admin:
+    description: Permissions group for GameMaster administrators
+    children:
+      gamemaster.autoexit: true
+      gamemaster.default: true
+      gamemaster.globalkit: true
