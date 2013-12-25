@@ -1,8 +1,9 @@
-main: com.amoebaman.gamemaster.GameMaster
+main: net.amoebaman.gamemaster.GameMaster
 
 name: GameMaster
-version: 2.1
-depend: [KitMaster, TagAPI]
+version: 2.5
+depend: [KitMaster, StatMaster]
+softdepend: [TagAPI]
 loadbefore: [CommandBook]
 author: AmoebaMan
 description: Schedules and runs autonomous events/minigames
@@ -46,37 +47,46 @@ commands:
     aliases: [end]
     description: Ends the current game
     usage: /endgame
-    permission: gamemaster.admin
+    permission: gamemaster.end
   nextgame:
     description: Sets the next game to be played
     usage: /nextgame <game>
-    permission: gamemaster.admin
+    permission: gamemaster.nextgame
   nextmap:
     description: Sets the next map to be played
     usage: /nextmap <map>
-    permission: gamemaster.admin
+    permission: gamemaster.nextmap
     
   patch:
     description: Restarts the server for a patch
     usage: /patch
-    permission: gamemaster.admin
+    permission: gamemaster.patch
   gm-debug-cycle:
     description: Signals the plugin to print debugging info for once cycle of its recurring ops
     usage: /gm-debug-cycle
+    permission: gamemaster.debug
+  setlobby:
+    description: Sets the lobby spawn location
     permission: gamemaster.admin
-  setwait:
-    description: Sets the waiting room
-    permission: gamemaster.admin
-  swapteam:
-    aliases: [s, swap]
-    description: Swaps the given player's team
+  setfireworks:
+  	description: Sets the fireworks launch location
+  	permission: gamemaster.admin
+  changeteam:
+    aliases: [change]
+    description: Changes the given player's team
     usage: /swapteam [player]
-    permission: gamemaster.swap
+    permission: gamemaster.teams
   balanceteams:
     aliases: [balance]
     description: Toggles automatic team balancing
     usage: /balanceteams
-    permission: gamemaster.admin
+    permission: gamemaster.teams
+    
+  game-map:
+    aliases: [gamemap, map, mapedit, editmap]
+    description: Root command for map editing
+    usage: /game-map <...>
+    permission: gamemaster.maps
     
     
 permissions:
@@ -86,9 +96,19 @@ permissions:
     description: Allows joining players to automatically exit
     children:
       gamemaster.exit: true
+  gamemaster.moderator:
+    description: Permissions group for GameMaster moderators
+    children:
+      gamemaster.end: true
+      gamemaster.nextgame: true
+      gamemaster.nextmap: true
+      gamemaster.autoexit: true
   gamemaster.admin:
     description: Permissions group for GameMaster administrators
     children:
-      gamemaster.autoexit: true
-      gamemaster.default: true
+      gamemaster.moderator: true
+      gamemaster.spectate: true
+      gamemaster.exit: true
+      gamemaster.patch: true
+      gamemaster.debug: true
       gamemaster.globalkit: true
