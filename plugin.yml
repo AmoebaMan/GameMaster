@@ -69,8 +69,8 @@ commands:
     description: Sets the lobby spawn location
     permission: gamemaster.admin
   setfireworks:
-  	description: Sets the fireworks launch location
-  	permission: gamemaster.admin
+    description: Sets the fireworks launch location
+    permission: gamemaster.admin
   changeteam:
     aliases: [change]
     description: Changes the given player's team
@@ -87,7 +87,6 @@ commands:
     description: Root command for map editing
     usage: /game-map <...>
     permission: gamemaster.maps
-    
     
 permissions:
   gamemaster.globalkit:
