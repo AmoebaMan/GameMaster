@@ -241,7 +241,7 @@ public class Simple {
 					
 					Firework firework = (Firework) GameMaster.fireworksLaunch.getWorld().spawnEntity(GameMaster.fireworksLaunch.clone().add((Math.random() - 0.5) * 10, 0, (Math.random() - 0.5)), EntityType.FIREWORK);
 					firework.setFireworkMeta(meta);
-				}}, (int) (20 + i*4 + (Math.random()-0.5) * 4));
+				}}, (int) (100 + i*4 + (Math.random()-0.5) * 4));
 		}
 
 		//Purge the scoreboard
