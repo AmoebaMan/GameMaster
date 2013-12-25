@@ -226,11 +226,12 @@ public class Simple {
 		//Shoot off fireworks in the winning team's colors
 		if(winner != null){
 			final Color color = winner.dye.getFireworkColor();
+			final Color[] grayscale = {Color.BLACK, Color.GRAY, Color.SILVER, Color.WHITE};
 			for(int i = 0; i < 50; i++)
 				Bukkit.getScheduler().scheduleSyncDelayedTask(game, new Runnable(){ public void run(){
 					FireworkEffect burst = FireworkEffect.builder()
-											.withColor(color)
-											.withFade(Math.random() > 0.5 ? Color.GRAY : Color.SILVER)
+											.withColor(color.mixColors(grayscale[(int) (Math.random() * grayscale.length)]))
+											.withFade(color.mixColors(grayscale[(int) (Math.random() * grayscale.length)]))
 											.with(Type.values()[(int)(Math.random() * Type.values().length)])
 											.flicker(Math.random() > 0.5)
 											.trail(Math.random() > 0.5)
@@ -238,7 +239,7 @@ public class Simple {
 					FireworkMeta meta = (FireworkMeta) new ItemStack(Material.FIREWORK).getItemMeta();
 					meta.addEffect(burst);
 					
-					Firework firework = (Firework) GameMaster.fireworksLaunch.getWorld().spawnEntity(GameMaster.fireworksLaunch, EntityType.FIREWORK);
+					Firework firework = (Firework) GameMaster.fireworksLaunch.getWorld().spawnEntity(GameMaster.fireworksLaunch.clone().add((Math.random() - 0.5) * 10, 0, (Math.random() - 0.5)), EntityType.FIREWORK);
 					firework.setFireworkMeta(meta);
 				}}, (int) (20 + i*4 + (Math.random()-0.5) * 4));
 		}
