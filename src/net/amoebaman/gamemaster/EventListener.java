@@ -1,5 +1,7 @@
 package net.amoebaman.gamemaster;
 
+import java.util.HashMap;
+
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
@@ -318,6 +320,7 @@ public class EventListener implements Listener {
 		}
 	}
 	
+	private HashMap<Player, Horse> steeds = new HashMap<Player, Horse>();
 	@EventHandler(priority=EventPriority.LOW)
 	public void creatureSpawn(CreatureSpawnEvent event){
 		if(event.getEntity() instanceof Tameable && (event.getSpawnReason() == SpawnReason.BREEDING || event.getSpawnReason() == SpawnReason.SPAWNER_EGG)){
@@ -347,24 +350,20 @@ public class EventListener implements Listener {
 								wolf.setCollarColor(((TeamAutoGame) GameMaster.activeGame).getTeam(tamer).dye);
 						}
 						if(pet instanceof Horse){
-							boolean hasHorse = false;
-							for(Horse each : tamer.getWorld().getEntitiesByClass(Horse.class))
-								if(tamer.equals(each.getOwner())){
-									if(hasHorse){
-										event.setCancelled(true);
-										tamer.sendMessage(ChatColor.DARK_RED + "You can only spawn in 1 horse at once");
-										return;
-									}
-									hasHorse = true;
-								}
+							if(steeds.containsKey(tamer) && !steeds.get(tamer).isDead()){
+								event.setCancelled(true);
+								tamer.sendMessage(ChatColor.DARK_RED + "You can only spawn in 1 horse at once");
+								return;
+							}
 							
 							Horse horse = (Horse) pet;
 							horse.setDomestication(horse.getMaxDomestication());
-							horse.setJumpStrength(2.0);
+							horse.setJumpStrength(0.75);
 							horse.setMaxHealth(40);
 							horse.setAdult();
 							horse.setTamed(true);
 							horse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
+							steeds.put(tamer, horse);
 						}
 						return;
 					}
@@ -428,9 +427,10 @@ public class EventListener implements Listener {
 		Player player = event.getPlayer();
 		for(World world : Bukkit.getWorlds())
 			for(Entity e : world.getEntities()){
-				if(e instanceof Tameable && player.equals(((Tameable) e).getOwner()))
-					while(!e.isDead())
-						((LivingEntity) e).damage(20);
+				if(e instanceof Tameable && player.equals(((Tameable) e).getOwner())){
+					e.getWorld().playSound(e.getLocation(), Sound.FIZZ, 1f, 1f);
+					e.remove();
+				}
 				if(e instanceof Projectile){
 					Projectile proj = (Projectile) e;
 					if(player.equals(proj.getShooter()))
