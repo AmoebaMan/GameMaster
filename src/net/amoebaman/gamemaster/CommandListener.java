@@ -115,8 +115,8 @@ public class CommandListener {
 			if(sender instanceof Player)
 				sender.sendMessage(ChatUtils.format(" You have [[" + StatMaster.getHandler().getStat((Player) sender, "charges") + "]] charges", ColorScheme.HIGHLIGHT));
 			sender.sendMessage(ChatUtils.format(" Earn charges by voting for us once per day", ColorScheme.HIGHLIGHT));
-			sender.sendMessage(ChatUtils.format("   bit.ly/landwarvotepmc", ColorScheme.HIGHLIGHT));
-			sender.sendMessage(ChatUtils.format("   bit.ly/landwarvotems", ColorScheme.HIGHLIGHT));
+			sender.sendMessage(ChatUtils.format("   http://bit.ly/landwarvotepmc", ColorScheme.HIGHLIGHT));
+			sender.sendMessage(ChatUtils.format("   http://bit.ly/landwarvotems", ColorScheme.HIGHLIGHT));
 			sender.sendMessage(ChatUtils.format(" Use charges with [[/charges use]] to upgrade kits", ColorScheme.NORMAL));
 			sender.sendMessage(ChatUtils.format(" Get info about a charged kit with [[/charges info <kit>]]", ColorScheme.NORMAL));
 			sender.sendMessage(ChatUtils.spacerLine());
