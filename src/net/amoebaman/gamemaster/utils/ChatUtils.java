@@ -99,8 +99,8 @@ public class ChatUtils {
 	}
 	
 	public static String format(String line){
-		line = line.replace("&&", ChatColor.COLOR_CHAR + "");
-		line = line.replace("//", ChatColor.ITALIC.toString());
+		line = line.replace("[^~]&&", ChatColor.COLOR_CHAR + "");
+		line = line.replaceAll("[^:]//", ChatColor.ITALIC.toString());
 		line = line.replace("**", ChatColor.BOLD.toString());
 		line = line.replace("__", ChatColor.UNDERLINE.toString());
 		line = line.replace("\\\\", ChatColor.RESET.toString());
