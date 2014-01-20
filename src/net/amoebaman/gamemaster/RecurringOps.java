@@ -83,7 +83,7 @@ public class RecurringOps implements Runnable {
 							player.sendMessage(ChatColor.RED + "You can't re-enter spawn for " + (game.getSpawnReentryDelaySeconds(player) - ((System.currentTimeMillis() - GameMaster.lastDamage.get(player)) / 1000) ) + " more seconds");
 						}
 						else
-							player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 35, 2), true);
+							player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 35, 6), true);
 					}
 				}
 			}
