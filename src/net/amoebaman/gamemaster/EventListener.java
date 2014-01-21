@@ -24,6 +24,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.World;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Horse;
@@ -447,8 +448,11 @@ public class EventListener implements Listener {
 		 */
 		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN && event.getAction().name().contains("CLICK_BLOCK")){
 			Material mat = event.getClickedBlock().getType();
-			if(mat == Material.TRAP_DOOR || mat == Material.LEVER || mat == Material.FIRE || mat == Material.ITEM_FRAME)
+			if(mat == Material.TRAP_DOOR || mat == Material.LEVER || mat == Material.ITEM_FRAME)
 				event.setCancelled(true);
+			for(BlockFace face : BlockFace.values())
+				if(event.getClickedBlock().getRelative(face).getType() == Material.FIRE)
+					event.setCancelled(true);
 		}
 	}
 	
