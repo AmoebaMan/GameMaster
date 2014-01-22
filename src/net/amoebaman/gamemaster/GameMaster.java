@@ -408,7 +408,8 @@ public class GameMaster extends JavaPlugin{
 		return killer;
 	}
 	
-	public static void defRepair(Set<BlockState> states){
+	@SuppressWarnings("deprecation")
+    public static void defRepair(Set<BlockState> states){
 		YamlConfiguration repairYaml = new YamlConfiguration();
 		repairYaml.options().pathSeparator('/');
 		for(BlockState state : states)
@@ -421,7 +422,8 @@ public class GameMaster extends JavaPlugin{
         }
 	}
 	
-	public static void repair(){
+	@SuppressWarnings("deprecation")
+    public static void repair(){
 		YamlConfiguration repairYaml = new YamlConfiguration();
 		repairYaml.options().pathSeparator('/');
 		try {
