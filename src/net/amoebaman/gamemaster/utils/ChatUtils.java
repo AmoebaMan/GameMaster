@@ -1,6 +1,7 @@
 package net.amoebaman.gamemaster.utils;
 
 import java.util.HashMap;
+import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -116,6 +117,19 @@ public class ChatUtils {
 		line = line.replace("¦", "[");
 		line = line.replace("¥", "]");
 		return line;
+	}
+	
+	public static String makeProgressBar(int length, int total, List<ChatColor> colors, List<Integer> values){
+		if(colors.size() < values.size())
+			return format("[[[ERROR]]]", ColorScheme.ERROR);
+		String bar = ChatColor.DARK_GRAY + "[";
+		for(int i = 0; i < colors.size(); i++){
+			bar += colors.get(i);
+			for(int j = 0; j < (1f * values.get(i) / total) * length; j++)
+				bar += "|";
+		}
+		bar += ChatColor.DARK_GRAY + "]";
+		return bar;
 	}
 	
 	public static void bigBroadcast(String... lines){
