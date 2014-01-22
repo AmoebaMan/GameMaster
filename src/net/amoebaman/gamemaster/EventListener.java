@@ -505,7 +505,8 @@ public class EventListener implements Listener {
 	}
 	
 	private static PlayerMap<String> splashHarms = new PlayerMap<String>();
-	@EventHandler(priority=EventPriority.LOW)
+	@SuppressWarnings("deprecation")
+    @EventHandler(priority=EventPriority.LOW)
 	public void potionSplash(PotionSplashEvent event){
 		ThrownPotion potion = event.getPotion();
 		Player thrower = null;
@@ -556,7 +557,7 @@ public class EventListener implements Listener {
 		Player player = event.getPlayer();
 		if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && event.getCause() == TeleportCause.ENDER_PEARL){
 			if(System.currentTimeMillis() - teleports.get(player) < 3000){
-				player.sendMessage(ChatUtils.format("You need to wait [[" + (int)((teleports.get(player) + 3000 - System.currentTimeMillis()) / 1000) + "]] seconds to teleport again", ColorScheme.ERROR));
+				player.sendMessage(ChatUtils.format("You need to wait [[" + (int)((teleports.get(player) + 10000 - System.currentTimeMillis()) / 1000) + "]] seconds to teleport again", ColorScheme.ERROR));
 				event.setCancelled(true);
 			}
 			else
