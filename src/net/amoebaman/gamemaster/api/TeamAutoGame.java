@@ -113,8 +113,8 @@ public abstract class TeamAutoGame extends AutoGame implements SafeSpawnModule{
 		return getPlayers(team).size();
 	}
 	
-	public int getEvenSize(Team team){
-		return Math.round(1f * GameMaster.getPlayers().size() / getActiveTeams(GameMaster.activeMap).size());
+	public int getProperSize(Team team){
+		return GameMaster.getPlayers().size() / getActiveTeams(GameMaster.activeMap).size();
 	}
 
 	public abstract void balanceTeams();

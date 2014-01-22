@@ -7,7 +7,6 @@ import java.util.Set;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
-import org.bukkit.DyeColor;
 import org.bukkit.FireworkEffect;
 import org.bukkit.FireworkEffect.Type;
 import org.bukkit.Location;
@@ -76,8 +75,8 @@ public class Simple {
 				game.addPlayer(player);
 		for(Team team : game.getActiveTeams(GameMaster.activeMap)){
 			if(GameMaster.debugCycle)
-				GameMaster.logger().info(team + "'s size is " + game.getSize(team) + ", ideal is " + game.getEvenSize(team));
-			if(game.getSize(team) > game.getEvenSize(team) + 1){
+				GameMaster.logger().info(team + "'s size is " + game.getSize(team) + ", ideal is " + game.getProperSize(team));
+			if(game.getSize(team) > game.getProperSize(team) + 1){
 				Team mostNeedy = null;
 				int leastPlayers = game.getSize(team);
 				for(Team other : game.getActiveTeams(GameMaster.activeMap))
