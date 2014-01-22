@@ -344,7 +344,6 @@ public class EventListener implements Listener {
 							
 							Wolf wolf = (Wolf) pet;
 							wolf.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 24000, 1));
-							wolf.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 24000, 1));
 							wolf.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 24000, 1));
 							wolf.setMaxHealth(20);
 							if(GameMaster.activeGame instanceof TeamAutoGame && GameMaster.getStatus(tamer) == PlayerStatus.PLAYING)
