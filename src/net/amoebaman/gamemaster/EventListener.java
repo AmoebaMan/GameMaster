@@ -54,6 +54,7 @@ import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -343,7 +344,7 @@ public class EventListener implements Listener {
 							}
 							
 							Wolf wolf = (Wolf) pet;
-							wolf.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 24000, 1));
+							wolf.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 24000, 0));
 							wolf.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 24000, 1));
 							wolf.setMaxHealth(20);
 							if(GameMaster.activeGame instanceof TeamAutoGame && GameMaster.getStatus(tamer) == PlayerStatus.PLAYING)
@@ -455,6 +456,12 @@ public class EventListener implements Listener {
 		}
 	}
 	
+	@EventHandler(priority=EventPriority.LOW)
+	public void playerInteractEntity(PlayerInteractEntityEvent event){
+		if(event.getPlayer().getItemInHand().getType() == Material.MONSTER_EGG)
+			event.setCancelled(true);
+	}
+	
 	/*
 	 * This is needed to make infinite stacks of consumable items work properly.
 	 */
@@ -556,7 +563,7 @@ public class EventListener implements Listener {
 	public void preventEnderPearlSpam(PlayerTeleportEvent event){
 		Player player = event.getPlayer();
 		if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && event.getCause() == TeleportCause.ENDER_PEARL){
-			if(System.currentTimeMillis() - teleports.get(player) < 3000){
+			if(System.currentTimeMillis() - teleports.get(player) < 10000){
 				player.sendMessage(ChatUtils.format("You need to wait [[" + (int)((teleports.get(player) + 10000 - System.currentTimeMillis()) / 1000) + "]] seconds to teleport again", ColorScheme.ERROR));
 				event.setCancelled(true);
 			}
