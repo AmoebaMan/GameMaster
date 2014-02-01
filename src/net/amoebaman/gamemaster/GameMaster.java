@@ -146,8 +146,7 @@ public class GameMaster extends JavaPlugin{
 			}
 		/*
 		 * Register statistics with the StatMaster
-		 */
-		StatMaster.getHandler().registerStat(new Statistic("Charges", 0));
+		 */	
 		StatMaster.getHandler().registerStat(new Statistic("Wins", 0, "games", "default"));
 		StatMaster.getHandler().registerStat(new Statistic("Losses", 0, "games", "default"));
 		StatMaster.getHandler().registerCommunityStat(new Statistic("Big games", 0));
@@ -354,6 +353,8 @@ public class GameMaster extends JavaPlugin{
 		player.setPlayerListName(player.getName());
 		lastDamage.remove(player);
 		respawning.remove(player);
+		if(player.isInsideVehicle())
+			player.getVehicle().eject();
 	}
 	
 	public static void updatePlayerColors(){
