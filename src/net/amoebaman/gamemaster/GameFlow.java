@@ -69,7 +69,7 @@ public class GameFlow {
 		if(GameMaster.activeGame != null){
 			GameMaster.lastGame = GameMaster.activeGame;
 			GameMaster.mapHistory.add(GameMaster.activeMap);
-			if(GameMaster.mapHistory.size() > 3)
+			if(GameMaster.mapHistory.size() > 5)
 				GameMaster.mapHistory.remove(0);
 			GameMaster.activeGame = null;
 			GameMaster.activeMap = null;

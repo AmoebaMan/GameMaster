@@ -1,7 +1,5 @@
 package net.amoebaman.gamemaster;
 
-import java.util.HashMap;
-
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
@@ -27,7 +25,6 @@ import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.Horse;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
@@ -35,26 +32,21 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Tameable;
 import org.bukkit.entity.ThrownPotion;
 import org.bukkit.entity.Vehicle;
-import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
-import org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -174,8 +166,6 @@ public class EventListener implements Listener {
 			if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && (event.getCause() == DamageCause.ENTITY_ATTACK || event.getCause() == DamageCause.PROJECTILE || event.getCause() == DamageCause.MAGIC))
 				GameMaster.lastDamage.put(player, System.currentTimeMillis());
 		}
-		if(event.getCause() != DamageCause.MAGIC)
-			splashHarms.remove((Player) event.getEntity());
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
@@ -302,7 +292,7 @@ public class EventListener implements Listener {
 		GameMaster.lastDamage.remove(event.getEntity());
 		if(event instanceof PlayerDeathEvent){
 			Player player = (Player) event.getEntity();
-			if(splashHarms.containsKey(player)){
+			if(splashHarms.containsKey(player) && (player.getLastDamageCause().getCause() == DamageCause.MAGIC || player.getLastDamageCause().getCause() == DamageCause.WITHER)){
 				Player thrower = Bukkit.getPlayer(splashHarms.get(player));
 				if(thrower != null){
 					player.setLastDamageCause(new EntityDamageByEntityEvent(thrower, player, DamageCause.ENTITY_ATTACK, 10.0));
@@ -320,65 +310,6 @@ public class EventListener implements Listener {
 			if(topInv != null && (topInv.getHolder() instanceof BlockState || topInv.getHolder() instanceof Vehicle))
 				event.setCancelled(true);
 		}
-	}
-	
-	private HashMap<Player, Horse> steeds = new HashMap<Player, Horse>();
-	@EventHandler(priority=EventPriority.LOW)
-	public void creatureSpawn(CreatureSpawnEvent event){
-		if(event.getEntity() instanceof Tameable && (event.getSpawnReason() == SpawnReason.BREEDING || event.getSpawnReason() == SpawnReason.SPAWNER_EGG)){
-			Tameable pet = (Tameable) event.getEntity();
-			for(Entity other : event.getEntity().getNearbyEntities(5, 5, 5))
-				if(other instanceof Player){
-					Player tamer = (Player) other;
-					if(tamer.getItemInHand().getType() == Material.MONSTER_EGG){
-						pet.setOwner(tamer);
-						if(pet instanceof Wolf){
-							int tamed = 0;
-							for(Wolf each : tamer.getWorld().getEntitiesByClass(Wolf.class))
-								if(tamer.equals(each.getOwner()))
-									tamed++;
-							if(tamed >= 16){
-								event.setCancelled(true);
-								tamer.sendMessage(ChatColor.DARK_RED + "You can only spawn in 16 wolves at once");
-								return;
-							}
-							
-							Wolf wolf = (Wolf) pet;
-							wolf.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 24000, 0));
-							wolf.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 24000, 1));
-							wolf.setMaxHealth(20);
-							if(GameMaster.activeGame instanceof TeamAutoGame && GameMaster.getStatus(tamer) == PlayerStatus.PLAYING)
-								wolf.setCollarColor(((TeamAutoGame) GameMaster.activeGame).getTeam(tamer).dye);
-						}
-						if(pet instanceof Horse){
-							if(steeds.containsKey(tamer) && !steeds.get(tamer).isDead()){
-								event.setCancelled(true);
-								tamer.sendMessage(ChatColor.DARK_RED + "You can only spawn in 1 horse at once");
-								return;
-							}
-							
-							Horse horse = (Horse) pet;
-							horse.setDomestication(horse.getMaxDomestication());
-							horse.setJumpStrength(0.75);
-							horse.setMaxHealth(40);
-							horse.setAdult();
-							horse.setTamed(true);
-							horse.getInventory().setSaddle(new ItemStack(Material.SADDLE));
-							steeds.put(tamer, horse);
-						}
-						return;
-					}
-				}
-		}
-	}
-	
-	@EventHandler(priority=EventPriority.LOW)
-	public void wolfRecall(PlayerInteractEvent event){
-		Player player = event.getPlayer();
-		if((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK) && player.getItemInHand() != null && player.getItemInHand().getType() == Material.BONE)
-			for(LivingEntity e : player.getWorld().getLivingEntities())
-				if(e instanceof Wolf && player.equals(((Wolf) e).getOwner()))
-					((Wolf) e).setTarget(null);
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
@@ -454,12 +385,6 @@ public class EventListener implements Listener {
 				if(event.getClickedBlock().getRelative(face).getType() == Material.FIRE)
 					event.setCancelled(true);
 		}
-	}
-	
-	@EventHandler(priority=EventPriority.LOW)
-	public void playerInteractEntity(PlayerInteractEntityEvent event){
-		if(event.getPlayer().getItemInHand().getType() == Material.MONSTER_EGG)
-			event.setCancelled(true);
 	}
 	
 	/*
@@ -552,7 +477,7 @@ public class EventListener implements Listener {
 							}
 				}
 				for(PotionEffect effect : potion.getEffects())
-					if(effect.getType().equals(PotionEffectType.HARM))
+					if(effect.getType().equals(PotionEffectType.HARM) || effect.getType().equals(PotionEffectType.WITHER))
 						splashHarms.put(victim, thrower.getName());
 			}
 		}
