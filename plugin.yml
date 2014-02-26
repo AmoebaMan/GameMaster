@@ -3,7 +3,6 @@ main: net.amoebaman.gamemaster.GameMaster
 name: GameMaster
 version: 2.5
 depend: [KitMaster, StatMaster]
-softdepend: [TagAPI]
 loadbefore: [CommandBook]
 author: AmoebaMan
 description: Schedules and runs autonomous events/minigames
@@ -42,7 +41,6 @@ commands:
     usage: /exit
     permission: gamemaster.exit
     
-    
   endgame:
     aliases: [end]
     description: Ends the current game
@@ -58,7 +56,7 @@ commands:
     permission: gamemaster.nextmap
     
   patch:
-    description: Restarts the server for a patch
+    description: Restarts the server with a patch message
     usage: /patch
     permission: gamemaster.patch
   gm-debug-cycle:
