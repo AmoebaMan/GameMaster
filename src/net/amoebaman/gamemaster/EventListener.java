@@ -510,7 +510,7 @@ public class EventListener implements Listener {
 	
 	@EventHandler(priority=EventPriority.LOW)
 	public void multiKill(MultiKillEvent event){
-		if(event.getAmount() >= 3){
+		if(event.getAmount() > 2){
 			StatMaster.getHandler().adjustStat(event.getPlayer(), "charges", (event.getAmount() - 2) * 0.25);
 			event.getPlayer().sendMessage(ChatUtils.format("You have received [[" + (event.getAmount() - 2) * 0.25 + "]] charges for your [[" + event.getAmount() + "]]x multikill", ColorScheme.HIGHLIGHT));
 		}
@@ -518,8 +518,8 @@ public class EventListener implements Listener {
 	
 	@EventHandler(priority=EventPriority.LOW)
 	public void killingSpree(KillingSpreeEvent event){
-		if(event.getSpree() >= 5 && event.isEnded()){
-			StatMaster.getHandler().adjustStat(event.getPlayer(), "charges", (event.getSpree() / 5) * 0.1);
+		if(event.getSpree() > 3 && event.isEnded()){
+			StatMaster.getHandler().adjustStat(event.getPlayer(), "charges", (event.getSpree() - 3) * 0.1);
 			event.getPlayer().sendMessage(ChatUtils.format("You have received [[" + ((event.getSpree() / 5) * 0.1) + "]] charges for your [[" + event.getSpree() + "]] kill spree", ColorScheme.HIGHLIGHT));
 		}
 	}
