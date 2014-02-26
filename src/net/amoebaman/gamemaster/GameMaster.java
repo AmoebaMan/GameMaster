@@ -175,8 +175,8 @@ public class GameMaster extends JavaPlugin{
 		 * Save up configurations
 		 */
 		try{
-			getConfig().set("main-lobby", S_Loc.stringSave(mainLobby));
-			getConfig().set("fireworks-launch", S_Loc.stringSave(fireworksLaunch));
+			getConfig().set("main-lobby", S_Loc.stringSave(mainLobby, true));
+			getConfig().set("fireworks-launch", S_Loc.stringSave(fireworksLaunch, false));
 			getConfig().save(configFile);
 			
 			YamlConfiguration mapsYaml = new YamlConfiguration();
@@ -414,7 +414,7 @@ public class GameMaster extends JavaPlugin{
 		YamlConfiguration repairYaml = new YamlConfiguration();
 		repairYaml.options().pathSeparator('/');
 		for(BlockState state : states)
-			repairYaml.set(S_Loc.stringSave(state.getLocation()), state.getTypeId() + " " + state.getRawData());
+			repairYaml.set(S_Loc.stringSave(state.getLocation(), false), state.getTypeId() + " " + state.getRawData());
 		try {
 	        repairYaml.save(repairFile);
         }

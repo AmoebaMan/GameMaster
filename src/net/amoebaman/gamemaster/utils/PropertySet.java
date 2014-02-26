@@ -50,19 +50,19 @@ public class PropertySet extends MemoryConfiguration{
 		if(value instanceof World)
 			super.set(path, ((World) value).getName());
 		else if(value instanceof Location)
-			super.set(path, S_Loc.stringSave((Location) value));
+			super.set(path, S_Loc.stringSave((Location) value, true));
 		else if(value instanceof List<?> && !((List<?>) value).isEmpty() && ((List<?>) value).get(0) instanceof Location){
 			List<String> strs = new ArrayList<String>();
 			List<Location> locs = (List<Location>) value;
 			for(Location loc : locs)
-				strs.add(S_Loc.stringSave(loc));
+				strs.add(S_Loc.stringSave(loc, true));
 			super.set(path, strs);
 		}
 		else if(value instanceof Map<?,?> && !((Map<?,?>) value).isEmpty() && ((Map<?,?>) value).values().toArray()[0] instanceof Location){
 			List<String> strs = new ArrayList<String>();
 			Map<?,Location> map = (Map<?,Location>) value;
 			for(Entry<?,Location> entry : map.entrySet())
-				strs.add(entry.getKey() + ":" + S_Loc.stringSave(entry.getValue()));
+				strs.add(entry.getKey() + ":" + S_Loc.stringSave(entry.getValue(), true));
 			super.set(path, strs);
 		}
 		else
