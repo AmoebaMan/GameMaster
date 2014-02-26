@@ -21,10 +21,10 @@ import net.amoebaman.gamemaster.GameFlow;
 import net.amoebaman.gamemaster.GameMaster;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.Team;
-import net.amoebaman.gamemaster.utils.ChatUtils;
 import net.amoebaman.gamemaster.utils.Utils;
-import net.amoebaman.gamemaster.utils.ChatUtils.ColorScheme;
 import net.amoebaman.statmaster.StatMaster;
+import net.amoebaman.utils.ChatUtils;
+import net.amoebaman.utils.ChatUtils.ColorScheme;
 
 public class Simple {
 	

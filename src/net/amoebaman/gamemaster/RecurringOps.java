@@ -4,8 +4,8 @@ import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.modules.SafeSpawnModule;
 import net.amoebaman.gamemaster.modules.TimerModule;
-import net.amoebaman.gamemaster.utils.ChatUtils;
-import net.amoebaman.gamemaster.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.ChatUtils;
+import net.amoebaman.utils.ChatUtils.ColorScheme;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;

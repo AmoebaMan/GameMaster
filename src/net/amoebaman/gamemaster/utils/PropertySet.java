@@ -3,6 +3,8 @@ package net.amoebaman.gamemaster.utils;
 import java.util.*;
 import java.util.Map.Entry;
 
+import net.amoebaman.utils.S_Loc;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;

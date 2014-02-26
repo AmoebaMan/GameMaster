@@ -19,11 +19,11 @@ import net.amoebaman.gamemaster.api.GameMap;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
 import net.amoebaman.gamemaster.modules.MessagerModule;
-import net.amoebaman.gamemaster.utils.ChatUtils;
-import net.amoebaman.gamemaster.utils.CommandController;
-import net.amoebaman.gamemaster.utils.PlayerMap;
-import net.amoebaman.gamemaster.utils.S_Loc;
-import net.amoebaman.gamemaster.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.ChatUtils;
+import net.amoebaman.utils.CommandController;
+import net.amoebaman.utils.PlayerMap;
+import net.amoebaman.utils.S_Loc;
+import net.amoebaman.utils.ChatUtils.ColorScheme;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
 
