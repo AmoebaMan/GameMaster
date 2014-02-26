@@ -1,12 +1,8 @@
 package net.amoebaman.gamemaster;
 
-import java.util.Random;
-
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.Team;
-import net.amoebaman.gamemaster.enums.Time;
-import net.amoebaman.gamemaster.enums.Weather;
 import net.amoebaman.gamemaster.modules.MessagerModule;
 import net.amoebaman.gamemaster.utils.ChatUtils;
 import net.amoebaman.gamemaster.utils.ChatUtils.ColorScheme;
@@ -16,7 +12,6 @@ import net.amoebaman.statmaster.StatMaster;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 
@@ -195,22 +190,22 @@ public class GameFlow {
 		/*
 		 * Configure the world's time and weather as per the map's instruction
 		 */
-		World world = GameMaster.activeMap.properties.getWorld("world");
-		Time time = Time.matchString(GameMaster.activeMap.properties.getString("time"));
-		if(time == Time.RANDOM)
-			GameMaster.worldTimeLock = new Random().nextInt(24000);
-		else
-			GameMaster.worldTimeLock = time.ticks;
-		Weather weather = Weather.matchString(GameMaster.activeMap.properties.getString("weather"));
-		if(weather == Weather.RANDOM){
-			world.setStorm(Math.random() > 0.7);
-			if(world.hasStorm())
-				world.setThundering(Math.random() > 0.5);
-		}
-		else{
-			world.setStorm(weather == Weather.RAINING);
-			world.setThundering(weather == Weather.STORMING);
-		}
+//		World world = GameMaster.activeMap.properties.getWorld("world");
+//		Time time = Time.matchString(GameMaster.activeMap.properties.getString("time"));
+//		if(time == Time.RANDOM)
+//			GameMaster.worldTimeLock = new Random().nextInt(24000);
+//		else
+//			GameMaster.worldTimeLock = time.ticks;
+//		Weather weather = Weather.matchString(GameMaster.activeMap.properties.getString("weather"));
+//		if(weather == Weather.RANDOM){
+//			world.setStorm(Math.random() > 0.7);
+//			if(world.hasStorm())
+//				world.setThundering(Math.random() > 0.5);
+//		}
+//		else{
+//			world.setStorm(weather == Weather.RAINING);
+//			world.setThundering(weather == Weather.STORMING);
+//		}
 		/*
 		 * Update status
 		 */
