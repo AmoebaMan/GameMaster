@@ -1,7 +1,7 @@
 package net.amoebaman.gamemaster.utils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -25,9 +25,23 @@ public class PropertySet extends MemoryConfiguration{
 		List<Location> locs = new ArrayList<Location>();
 		for(String str : strs)
 			locs.add(S_Loc.stringLoad(str));
-		if(locs.contains(null))
+		if(locs.isEmpty())
 			return null;
 		return locs;
+	}
+	
+	public Map<String,Location> getLocationMap(String path){
+		List<String> strs = getStringList(path);
+		if(strs == null)
+			return null;
+		Map<String,Location> map = new HashMap<String,Location>();
+		for(String str : strs){
+			String[] split = str.split(":");
+			map.put(split[0], S_Loc.stringLoad(split[1]));
+		}
+		if(map.isEmpty())
+			return null;
+		return map;
 	}
 	
 	public void set(String path, Object value){
@@ -40,6 +54,13 @@ public class PropertySet extends MemoryConfiguration{
 			List<Location> locs = (List<Location>) value;
 			for(Location loc : locs)
 				strs.add(S_Loc.stringSave(loc));
+			super.set(path, strs);
+		}
+		else if(value instanceof Map<?,?> && !((Map<?,?>) value).isEmpty() && ((Map<?,?>) value).values().toArray()[0] instanceof Location){
+			List<String> strs = new ArrayList<String>();
+			Map<?,Location> map = (Map<?,Location>) value;
+			for(Entry<?,Location> entry : map.entrySet())
+				strs.add(entry.getKey() + ":" + S_Loc.stringSave(entry.getValue()));
 			super.set(path, strs);
 		}
 		else
