@@ -61,13 +61,18 @@ public abstract class TeamAutoGame extends AutoGame implements SafeSpawnModule{
 		return players;
 	}
 	
-	public int getScore(Team team){
+	private void validateScoreboard(){
 		Objective obj = getBoard().getObjective("score");
 		if(obj == null){
 			obj = getBoard().registerNewObjective("score", "dummy");
 			obj.setDisplayName(ChatColor.GOLD + "        -=[ Score ]=-        ");
 			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 		}
+	}
+	
+	public int getScore(Team team){
+		validateScoreboard();
+		Objective obj = getBoard().getObjective("score");
 		if(obj.getScore(Bukkit.getOfflinePlayer(team.chat + team.toString())) != null)
 			return obj.getScore(Bukkit.getOfflinePlayer(team.chat + team.toString())).getScore();
 		else
@@ -75,12 +80,8 @@ public abstract class TeamAutoGame extends AutoGame implements SafeSpawnModule{
 	}
 	
 	public void setScore(Team team, int newScore){
+		validateScoreboard();
 		Objective obj = getBoard().getObjective("score");
-		if(obj == null){
-			obj = getBoard().registerNewObjective("score", "dummy");
-			obj.setDisplayName(ChatColor.GOLD + "        -=[ Score ]=-        ");
-			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
-		}
 		if(newScore < 0)
 			getBoard().resetScores(Bukkit.getOfflinePlayer(team.chat + team.toString()));
 		else
