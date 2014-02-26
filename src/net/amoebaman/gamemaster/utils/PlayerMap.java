@@ -1,82 +1,74 @@
 package net.amoebaman.gamemaster.utils;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-public class PlayerMap<V> implements Map<Player, V>{
+/**
+ * @author AmoebaMan
+ *
+ * A class that attempts to overcome the traditional aversion to using org.bukkit.entity.Player as
+ * the key type for a Map, namely that Player references can be quite large and we don't want to
+ * keep them around after they're gone unless necessary.
+ * <br><br>
+ * This class is externally typed with {@link org.bukkit.entity.Player} as the key type, but internally
+ * uses {@link java.lang.String} as the key type, using the player's name.
+ * <br><br>
+ * In addition to this memory-saving measure, this map also allows the contents to be accessed through
+ * either the player's name or the player object itself, meaning no more hassle with {@link Player#getName()}
+ * or {@link Bukkit#getPlayer(String)} when you want to pull out of a map.
+ * <br><br>
+ * If all this wasn't enough, you can also specify a default value when the map is initialized that will
+ * be returned instead of null if the key you're looking for doesn't exist within the map.
+ *
+ * @param <V> whatever you want to store
+ */
+public class PlayerMap<V> extends HashMap<String, V>{
 
-	private final V defaultValue;
-	private final Map<String, V> contents;
+    private static final long serialVersionUID = 8042999281349275123L;
+    private final V defaultValue;
 	
-	public PlayerMap(){
-		contents = new HashMap<String, V>();
-		defaultValue = null;
-	}
+	public PlayerMap(){ defaultValue = null; }
 	
-	public PlayerMap(V defaultV){
-		contents = new HashMap<String, V>();
-		defaultValue = defaultV;
-	}
-	
-	public PlayerMap(Map<String, V> internal){
-		contents = internal;
-		defaultValue = null;
-	}
-	
-	public PlayerMap(Map<String, V> internal, V defaultV){
-		contents = internal;
-		defaultValue = defaultV;
-	}
+	public PlayerMap(V defaultV){ defaultValue = defaultV; }
 	
 	public V getDefaultValue(){
 		return defaultValue;
 	}
-	
-	public void clear() {
-		contents.clear();
-	}
 
 	public boolean containsKey(Object key) {
 		if(key instanceof Player)
-			return contents.containsKey(((Player) key).getName());
+			return super.containsKey(((Player) key).getName());
 		if(key instanceof String)
-			return contents.containsKey(key);
+			return super.containsKey(key);
 		return false;
 	}
 
-	public boolean containsValue(Object value){
-		return contents.containsValue(value);
+	public boolean containsValueType(V value){
+		return super.containsKey(value);
 	}
 	
-	public Set<Entry<Player, V>> entrySet() {
+	public Set<Entry<Player, V>> playerEntrySet() {
 		Set<Entry<Player, V>> toReturn = new HashSet<Entry<Player, V>>();
-		for(String name : contents.keySet())
-			toReturn.add(new PlayerEntry(Bukkit.getPlayer(name), contents.get(name)));
+		for(String name : keySet())
+			toReturn.add(new PlayerEntry(Bukkit.getPlayer(name), get(name)));
 		return toReturn;
 	}
 
 	public V get(Object key) {
 		V result = null;
 		if(key instanceof Player)
-			result = contents.get(((Player) key).getName());
+			result = get(((Player) key).getName());
 		if(key instanceof String)
-			result = contents.get(key);
+			result = get(key);
 		return (result == null) ? defaultValue : result;
 	}
-
-	public boolean isEmpty(){
-		return contents.isEmpty();
-	}
 	
-	public Set<Player> keySet(){
+	public Set<Player> playerKeySet(){
 		Set<Player> toReturn = new HashSet<Player>();
-		for(String name : contents.keySet())
+		for(String name : keySet())
 			toReturn.add(Bukkit.getPlayer(name));
 		return toReturn;
 	}
@@ -84,40 +76,20 @@ public class PlayerMap<V> implements Map<Player, V>{
 	public V put(Player key, V value) {
 		if(key == null)
 			return null;
-		return contents.put(key.getName(), value);
-	}
-	
-	public V put(String key, V value){
-		return contents.put(key, value);
+		return put(key.getName(), value);
 	}
 
-	public void putAll(Map<? extends Player, ? extends V> map) {
+	public void putAllPlayers(Map<? extends Player, ? extends V> map) {
 		for(Entry<? extends Player, ? extends V> entry : map.entrySet())
 			put(entry.getKey(), entry.getValue());
 	}
 
 	public V remove(Object key) {
 		if(key instanceof Player)
-			return contents.remove(((Player) key).getName());
+			return remove(((Player) key).getName());
 		if(key instanceof String)
-			return contents.remove(key);
+			return remove(key);
 		return null;
-	}
-
-	public int size() {
-		return contents.size();
-	}
-
-	public Collection<V> values() {
-		return contents.values();
-	}
-	
-	public String toString(){
-		return contents.toString();
-	}
-	
-	public final Map<String, V> getInternalMap(){
-		return contents;
 	}
 	
 	public class PlayerEntry implements Map.Entry<Player, V>{
