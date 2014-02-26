@@ -14,6 +14,7 @@ import net.amoebaman.gamemaster.utils.ChatUtils;
 import net.amoebaman.gamemaster.utils.ChatUtils.ColorScheme;
 import net.amoebaman.gamemaster.utils.CommandController.CommandHandler;
 import net.amoebaman.gamemaster.utils.CommandController.SubCommandHandler;
+import net.amoebaman.gamemaster.utils.HeadsUpDisplay;
 import net.amoebaman.gamemaster.utils.PropertySet;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.kitmaster.controllers.ItemController;
@@ -34,6 +35,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
 public class CommandListener {
+	
+	@CommandHandler(name = "tester")
+	public void testerCmd(Player player, String[] args){
+		HeadsUpDisplay.displayLoadingBar("Testing loading bar...", "Test complete!", player, 10, true);
+	}
 	
 	@CommandHandler(name = "game")
 	public void gameCmd(CommandSender sender, String[] args){

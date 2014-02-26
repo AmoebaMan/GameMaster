@@ -86,6 +86,8 @@ commands:
     usage: /game-map <...>
     permission: gamemaster.maps
     
+  tester:
+    
 permissions:
   gamemaster.globalkit:
     description: Allows users to take kits from anywhere in the map
