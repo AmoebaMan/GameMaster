@@ -91,7 +91,7 @@ public class GameMaster extends JavaPlugin{
 		 * Initialize listeners
 		 */
 		Bukkit.getPluginManager().registerEvents(new EventListener(), this);
-		CommandController.registerCommands(new CommandListener(), this);
+		CommandController.registerCommands(new CommandListener());
 		/*
 		 * Establish files and directories
 		 */

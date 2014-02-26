@@ -7,14 +7,10 @@ import net.amoebaman.gamemaster.api.GameMap;
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
 import net.amoebaman.gamemaster.enums.Team;
-import net.amoebaman.gamemaster.enums.Time;
-import net.amoebaman.gamemaster.enums.Weather;
 import net.amoebaman.gamemaster.modules.TimerModule;
 import net.amoebaman.gamemaster.utils.ChatUtils;
 import net.amoebaman.gamemaster.utils.ChatUtils.ColorScheme;
 import net.amoebaman.gamemaster.utils.CommandController.CommandHandler;
-import net.amoebaman.gamemaster.utils.CommandController.SubCommandHandler;
-import net.amoebaman.gamemaster.utils.HeadsUpDisplay;
 import net.amoebaman.gamemaster.utils.PropertySet;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.kitmaster.controllers.ItemController;
@@ -36,12 +32,7 @@ import org.bukkit.potion.PotionEffect;
 
 public class CommandListener {
 	
-	@CommandHandler(name = "tester")
-	public void testerCmd(Player player, String[] args){
-		HeadsUpDisplay.displayLoadingBar("Testing loading bar...", "Test complete!", player, 10, true);
-	}
-	
-	@CommandHandler(name = "game")
+	@CommandHandler(cmd = "game")
 	public void gameCmd(CommandSender sender, String[] args){
 		if(GameMaster.activeGame == null || !GameMaster.activeGame.isActive()){
 			sender.sendMessage(ChatUtils.format("There isn't a game running", ColorScheme.ERROR));
@@ -62,7 +53,7 @@ public class CommandListener {
 		sender.sendMessage(ChatUtils.spacerLine());
 	}
 	
-	@CommandHandler(name = "vote")
+	@CommandHandler(cmd = "vote")
 	public void voteCmd(CommandSender sender, String[] args){
 		switch(GameMaster.status){
 			case INTERMISSION:
@@ -113,7 +104,7 @@ public class CommandListener {
 		return KitHandler.getKitByIdentifier("C-" + normal.name);
 	}
 	
-	@CommandHandler(name = "charges")
+	@CommandHandler(cmd = "charges")
 	public void chargesCmd(CommandSender sender, String[] args){
 		
 		if(args == null || args.length < 1){
@@ -154,7 +145,7 @@ public class CommandListener {
 		}
 	}
 	
-	@SubCommandHandler(parent = "charges", name = "use")
+	@CommandHandler(cmd = "charges use")
 	public void chargesUseCmd(Player player, String[] args){
 		if(StatMaster.getHandler().getStat(player, "charges") < 1){
 			player.sendMessage(ChatUtils.format("You don't have any charges", ColorScheme.ERROR));
@@ -179,7 +170,7 @@ public class CommandListener {
 		return;
 	}
 	
-	@SubCommandHandler(parent = "charges", name = "info")
+	@CommandHandler(cmd = "charges info")
 	public void chargesInfoCmd(CommandSender sender, String[] args){
 		if(args.length < 2){
 			sender.sendMessage(ChatUtils.format("Name a kit to get info about its charged state", ColorScheme.ERROR));
@@ -204,7 +195,7 @@ public class CommandListener {
 			sender.sendMessage(ChatColor.ITALIC + attribute.toString() + ": " + charged.getAttribute(attribute));
 	}
 	
-	@CommandHandler(name = "teamchat")
+	@CommandHandler(cmd = "teamchat")
 	public void teamchatCmd(Player player, String[] args){
 		if(GameMaster.teamChatters.contains(player))
 			GameMaster.teamChatters.remove(player);
@@ -213,13 +204,13 @@ public class CommandListener {
 		player.sendMessage(ChatUtils.format("Team-exclusive chatting is [[" + (GameMaster.teamChatters.contains(player) ? "enabled" : "disabled") + "]]", ColorScheme.NORMAL));	
 	}
 	
-	@CommandHandler(name = "fixme")
+	@CommandHandler(cmd = "fixme")
 	public void fixmeCmd(Player player, String[] args){
 		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tp " + player.getName() + " " + player.getName());
 		player.sendMessage(ChatUtils.format("No problem", ColorScheme.NORMAL));
 	}
 	
-	@CommandHandler(name = "changeteam")
+	@CommandHandler(cmd = "changeteam")
 	public void changeteamCmd(CommandSender sender, String[] args){
 		if(!GameMaster.status.active){
 			sender.sendMessage(ChatUtils.format("There isn't a game running", ColorScheme.ERROR));
@@ -247,13 +238,13 @@ public class CommandListener {
 		((TeamAutoGame) GameMaster.activeGame).changeTeam(target);
 	}
 	
-	@CommandHandler(name = "balanceteams")
+	@CommandHandler(cmd = "balanceteams")
 	public void balanceteamsCmd(CommandSender sender, String[] args){
 		TeamAutoGame.balancing = !TeamAutoGame.balancing;
 		sender.sendMessage(ChatUtils.format("Automatic team balancing is [[" + (TeamAutoGame.balancing ? "enabled" : "disabled") + "]]", ColorScheme.ERROR));
 	}
 	
-	@CommandHandler(name = "enter")
+	@CommandHandler(cmd = "enter")
 	public void enterCmd(Player player, String[] args){
 		if(GameMaster.getStatus(player) != PlayerStatus.PLAYING){
 			GameMaster.changeStatus(player, PlayerStatus.PLAYING);
@@ -261,7 +252,7 @@ public class CommandListener {
 		}
 	}
 	
-	@CommandHandler(name = "exit")
+	@CommandHandler(cmd = "exit")
 	public void exitCmd(Player player, String[] args){
 		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN){
 			GameMaster.changeStatus(player, PlayerStatus.ADMIN);
@@ -269,7 +260,7 @@ public class CommandListener {
 		}
 	}
 	
-	@CommandHandler(name = "spectate")
+	@CommandHandler(cmd = "spectate")
 	public void spectateCmd(Player player, String[] args){
 		if(GameMaster.getStatus(player) != PlayerStatus.EXTERIOR){
 			GameMaster.changeStatus(player, PlayerStatus.EXTERIOR);
@@ -277,19 +268,19 @@ public class CommandListener {
 		}
 	}
 	
-	@CommandHandler(name = "setlobby")
+	@CommandHandler(cmd = "setlobby")
 	public void setWaitCmd(Player player, String[] args){
 		GameMaster.mainLobby = player.getLocation();
 		player.sendMessage(ChatUtils.format("The waiting room was set to your location", ColorScheme.NORMAL));
 	}
 	
-	@CommandHandler(name = "setfireworks")
+	@CommandHandler(cmd = "setfireworks")
 	public void setFireworksCmd(Player player, String[] args){
 		GameMaster.fireworksLaunch = player.getLocation();
 		player.sendMessage(ChatUtils.format("The fireworks launch position was set to your location", ColorScheme.NORMAL));
 	}
 	
-	@CommandHandler(name = "endgame")
+	@CommandHandler(cmd = "endgame")
 	public void endGameCmd(CommandSender sender, String[] args){
 		if(GameMaster.activeGame != null && GameMaster.activeGame.isActive()){
 			GameMaster.activeGame.abort();
@@ -297,7 +288,7 @@ public class CommandListener {
 		}
 	}
 	
-	@CommandHandler(name = "nextgame")
+	@CommandHandler(cmd = "nextgame")
 	public void nextGameCmd(CommandSender sender, String[] args){
 		AutoGame game = GameMaster.getRegisteredGame(args[0]);
 		if(game == null){
@@ -309,7 +300,7 @@ public class CommandListener {
 		sender.sendMessage(ChatUtils.format("Set the next game to [[" + game.getGameName() + "]]", ColorScheme.NORMAL));
 	}
 	
-	@CommandHandler(name = "nextmap")
+	@CommandHandler(cmd = "nextmap")
 	public void nextMapCmd(CommandSender sender, String[] args){
 		AutoGame game = GameMaster.nextGame == null ? GameMaster.activeGame : GameMaster.nextGame;
 		if(game == null){
@@ -329,7 +320,7 @@ public class CommandListener {
 		sender.sendMessage(ChatUtils.format("Set the next map to [[" + GameMaster.nextMap + "]]", ColorScheme.NORMAL));
 	}
 	
-	@CommandHandler(name = "patch")
+	@CommandHandler(cmd = "patch")
 	public void patchCmd(CommandSender sender, String[] args){
 		String reason = "";
 		for(String str : args)
@@ -345,13 +336,13 @@ public class CommandListener {
 		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "stop");
 	}
 	
-	@CommandHandler(name = "gm-debug-cycle")
+	@CommandHandler(cmd = "gm-debug-cycle")
 	public void gmDebugCycleCmd(CommandSender sender, String[] args){	
 		GameMaster.debugCycle = true;
 		sender.sendMessage(ChatUtils.format("Printing debug info for one cycle of recurring ops", ColorScheme.NORMAL));
 	}
 
-	@SubCommandHandler(parent = "game-map", name = "create")
+	@CommandHandler(cmd = "game-map create")
 	public void mapCreateCmd(CommandSender sender, String[] args){
 		if(args.length < 1){
 			sender.sendMessage(ChatUtils.format("Include the name of the new map", ColorScheme.ERROR));
@@ -368,7 +359,7 @@ public class CommandListener {
 		sender.sendMessage(ChatUtils.format("Created a new map named [[" + args[0] + "]]", ColorScheme.NORMAL));
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "edit")
+	@CommandHandler(cmd = "game-map edit")
 	public void mapEditCmd(CommandSender sender, String[] args){
 		if(args.length < 1){
 			sender.sendMessage(ChatUtils.format("Include the name of the map to edit", ColorScheme.ERROR));
@@ -385,7 +376,7 @@ public class CommandListener {
 		sender.sendMessage(ChatUtils.format("Now editing the map named [[" + GameMaster.editMap + "]]", ColorScheme.NORMAL));
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "delete")
+	@CommandHandler(cmd = "game-map delete")
 	public void mapDeleteCmd(CommandSender sender, String[] args){
 		if(GameMaster.editMap == null){
 			sender.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
@@ -396,7 +387,7 @@ public class CommandListener {
 		GameMaster.editMap = null;
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "save")
+	@CommandHandler(cmd = "game-map save")
 	public void mapSaveCmd(CommandSender sender, String[] args){
 		if(GameMaster.editMap == null){
 			sender.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
@@ -408,7 +399,7 @@ public class CommandListener {
 		GameMaster.editMap = null;
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "info")
+	@CommandHandler(cmd = "game-map info")
 	public void mapInfoCmd(CommandSender sender, String[] args){
 		if(GameMaster.editMap == null){
 			sender.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
@@ -428,7 +419,7 @@ public class CommandListener {
 				sender.sendMessage(ChatUtils.format("[[" + key + ":]] " + prop.get(key), ColorScheme.NORMAL));
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "list")
+	@CommandHandler(cmd = "game-map list")
 	public void mapListCmd(CommandSender sender, String[] args){
 		sender.sendMessage(ChatUtils.format("[[Maps:]] " + GameMaster.maps, ColorScheme.NORMAL));
 		if(GameMaster.editMap != null)
@@ -440,7 +431,7 @@ public class CommandListener {
 		}
 	}
 
-	@SubCommandHandler(parent = "game-map", name = "world")
+	@CommandHandler(cmd = "game-map world")
 	public void mapWorldCmd(Player player, String[] args){
 		if(GameMaster.editMap == null){
 			player.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
@@ -450,47 +441,7 @@ public class CommandListener {
 		player.sendMessage(ChatUtils.format("Map world set to your current world", ColorScheme.NORMAL));
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "time")
-	public void mapTimeCmd(CommandSender sender, String[] args){
-		if(GameMaster.editMap == null){
-			sender.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
-			return;
-		}
-		if(args.length < 1){
-			sender.sendMessage(ChatUtils.format("Include the time of day", ColorScheme.ERROR));
-			return;
-		}
-		Time time = Time.matchString(args[0]);
-		if(time == null){
-			sender.sendMessage(ChatUtils.format("Invalid time of day", ColorScheme.ERROR));
-			sender.sendMessage(ChatUtils.format("Valid times: [[" + Time.values() + "]]", ColorScheme.ERROR));
-			return;
-		}
-		GameMaster.editMap.properties.set("time", time.name());
-		sender.sendMessage(ChatUtils.format("Time of day was set to [[" + time.name().toLowerCase() + "]]", ColorScheme.NORMAL));
-	}
-	
-	@SubCommandHandler(parent = "game-map", name = "weather")
-	public void mapWeatherCmd(CommandSender sender, String[] args){
-		if(GameMaster.editMap == null){
-			sender.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
-			return;
-		}
-		if(args.length < 1){
-			sender.sendMessage(ChatUtils.format("Include the weather", ColorScheme.ERROR));
-			return;
-		}
-		Weather weather = Weather.matchString(args[0]);
-		if(weather == null){
-			sender.sendMessage(ChatUtils.format("Invalid weather", ColorScheme.ERROR));
-			sender.sendMessage(ChatUtils.format("Valid weathers: [[" + Weather.values() + "]]", ColorScheme.ERROR));
-			return;
-		}
-		GameMaster.editMap.properties.set("weather", weather.name());
-		sender.sendMessage(ChatUtils.format("Weather was set to [[" + weather.name().toLowerCase() + "]]", ColorScheme.NORMAL));
-	}
-	
-	@SubCommandHandler(parent = "game-map", name = "addteam")
+	@CommandHandler(cmd = "game-map addteam")
 	public void mapAddTeamCmd(CommandSender sender, String[] args){
 		if(GameMaster.editMap == null){
 			sender.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
@@ -517,7 +468,7 @@ public class CommandListener {
 		sender.sendMessage(ChatUtils.format("The " + newTeam + " has been added to this map", ColorScheme.NORMAL));
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "removeteam")
+	@CommandHandler(cmd = "game-map removeteam")
 	public void mapRemoveTeamCmd(CommandSender sender, String[] args){
 		if(GameMaster.editMap == null){
 			sender.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
@@ -542,7 +493,7 @@ public class CommandListener {
 		sender.sendMessage(ChatUtils.format("The " + oldTeam + " has been added to this map", ColorScheme.NORMAL));
 	}
 	
-	@SubCommandHandler(parent = "game-map", name = "setspawn")
+	@CommandHandler(cmd = "game-map setspawn")
 	public void mapSetSpawnCmd(Player player, String[] args){
 		if(GameMaster.editMap == null){
 			player.sendMessage(ChatUtils.format("No map is being edited", ColorScheme.ERROR));
