@@ -358,17 +358,12 @@ public class EventListener implements Listener {
 	public void clearKits(ClearKitsEvent event){
 		Player player = event.getPlayer();
 		for(World world : Bukkit.getWorlds())
-			for(Entity e : world.getEntities()){
-				if(e instanceof Tameable && player.equals(((Tameable) e).getOwner())){
-					e.getWorld().playSound(e.getLocation(), Sound.FIZZ, 1f, 1f);
-					e.remove();
-				}
+			for(Entity e : world.getEntities())
 				if(e instanceof Projectile){
 					Projectile proj = (Projectile) e;
 					if(player.equals(proj.getShooter()))
 						proj.remove();
 				}
-			}
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
