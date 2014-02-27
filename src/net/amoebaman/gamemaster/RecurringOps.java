@@ -6,25 +6,16 @@ import net.amoebaman.gamemaster.modules.SafeSpawnModule;
 import net.amoebaman.gamemaster.modules.TimerModule;
 import net.amoebaman.utils.ChatUtils;
 import net.amoebaman.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.StatusBarAPI;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Scoreboard;
 
 public class RecurringOps implements Runnable {
 
-	private static Scoreboard timerBoard = Bukkit.getScoreboardManager().getNewScoreboard();
-	static{
-		Objective timer = timerBoard.registerNewObjective("timer", "dummy");
-		timer.setDisplayName(ChatColor.GOLD + "        -=[ Timer ]=-        ");
-		timer.setDisplaySlot(DisplaySlot.SIDEBAR);
-	}
-//	private static long lastScoreboardSwitch;
 	private static boolean announcedMinute;
 	
 	public void run() {
@@ -93,30 +84,18 @@ public class RecurringOps implements Runnable {
 			if(GameMaster.activeGame instanceof TimerModule){
 				TimerModule game = (TimerModule) GameMaster.activeGame;
 				
-				/*
-				 * Scoreboard timer
-				 */
-				timerBoard.getObjective("timer").getScore(Bukkit.getOfflinePlayer("Seconds left")).setScore(getSecondsRemaining(game));
-//				if(System.currentTimeMillis() - lastScoreboardSwitch > 5000){
-//					lastScoreboardSwitch = System.currentTimeMillis();
-//					for(Player player : Bukkit.getOnlinePlayers()){
-//						if(player.getScoreboard().getObjective("timer") != null)
-//							player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-//						else
-//							player.setScoreboard(timerBoard);
-//					}
-//				}
+				long millis = game.getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
+				int seconds = Math.round(millis / 1000F);
+				int mins = seconds / 60;
+				StatusBarAPI.setAllStatusBars(ChatUtils.format("[[" + GameMaster.activeGame.getGameName() + "]] on [[" + GameMaster.activeMap.name + "]] - [[" + mins + ":" + (seconds % 60 < 10 ? "0" + (seconds % 60) : seconds % 60) + "]]", ColorScheme.HIGHLIGHT), 1.0f * seconds / (game.getGameLengthMinutes() * 60));
 				
-				if(getMillisRemaining(game) <= 1000){
-					timerBoard.resetScores(Bukkit.getOfflinePlayer("Seconds left"));
+				if(millis <= 1000)
 					game.end();
-				}
-				else if(getSecondsRemaining(game) % 60 == 0 && getMinutesRemaining(game) > 0){
+				else if(seconds % 60 == 0 && mins > 0){
 					if(!announcedMinute){
-						Bukkit.broadcastMessage(ChatUtils.format("[[" + getMinutesRemaining(game) + " minutes]] remain on the clock", ColorScheme.HIGHLIGHT));
+						Bukkit.broadcastMessage(ChatUtils.format("[[" + mins + " minutes]] remain on the clock", ColorScheme.HIGHLIGHT));
 						announcedMinute = true;
-					}
-				}
+					}}
 				else
 					announcedMinute = false;
 			}
@@ -136,18 +115,6 @@ public class RecurringOps implements Runnable {
 		if(GameMaster.debugCycle)
 			GameMaster.logger().info("Debug is finished");
 		GameMaster.debugCycle = false;
-	}
-	
-	public static final long getMillisRemaining(TimerModule game){
-		return game.getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
-	}
-	
-	public static final int getSecondsRemaining(TimerModule game){
-		return Math.round(getMillisRemaining(game) / 1000F);
-	}
-	
-	public static final int getMinutesRemaining(TimerModule game){
-		return getSecondsRemaining(game) / 60;
 	}
 	
 }

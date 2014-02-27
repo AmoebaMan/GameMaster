@@ -9,6 +9,7 @@ import net.amoebaman.gamemaster.modules.SafeSpawnModule;
 import net.amoebaman.utils.ChatUtils;
 import net.amoebaman.utils.ChatUtils.ColorScheme;
 import net.amoebaman.utils.PlayerMap;
+import net.amoebaman.utils.StatusBarAPI;
 import net.amoebaman.kitmaster.enums.GiveKitContext;
 import net.amoebaman.kitmaster.utilities.ClearKitsEvent;
 import net.amoebaman.kitmaster.utilities.GiveKitEvent;
@@ -222,6 +223,7 @@ public class EventListener implements Listener {
 		Player player = event.getPlayer();
 		GameMaster.players.remove(player);
 		GameMaster.lastDamage.remove(player);
+		StatusBarAPI.removeStatusBar(player);
 		if(GameMaster.status.active && GameMaster.getStatus(player) == PlayerStatus.PLAYING){
 			player.teleport(GameMaster.mainLobby);
 			GameMaster.resetPlayer(player);
@@ -292,6 +294,7 @@ public class EventListener implements Listener {
 		GameMaster.lastDamage.remove(event.getEntity());
 		if(event instanceof PlayerDeathEvent){
 			Player player = (Player) event.getEntity();
+			StatusBarAPI.removeStatusBar(player);
 			if(splashHarms.containsKey(player) && (player.getLastDamageCause().getCause() == DamageCause.MAGIC || player.getLastDamageCause().getCause() == DamageCause.WITHER)){
 				Player thrower = Bukkit.getPlayer(splashHarms.get(player));
 				if(thrower != null){
@@ -520,7 +523,7 @@ public class EventListener implements Listener {
 	public void killingSpree(KillingSpreeEvent event){
 		if(event.getSpree() > 3 && event.isEnded()){
 			StatMaster.getHandler().adjustStat(event.getPlayer(), "charges", (event.getSpree() - 3) * 0.1);
-			event.getPlayer().sendMessage(ChatUtils.format("You have received [[" + ((event.getSpree() / 5) * 0.1) + "]] charges for your [[" + event.getSpree() + "]] kill spree", ColorScheme.HIGHLIGHT));
+			event.getPlayer().sendMessage(ChatUtils.format("You have received [[" + ((event.getSpree() - 3) * 0.1) + "]] charges for your [[" + event.getSpree() + "]] kill spree", ColorScheme.HIGHLIGHT));
 		}
 	}
 	
