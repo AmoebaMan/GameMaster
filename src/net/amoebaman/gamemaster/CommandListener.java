@@ -48,7 +48,8 @@ public class CommandListener {
 		for(String line : GameMaster.activeGame.getStatus(context))
 			sender.sendMessage(ChatUtils.centerAlign(ChatUtils.format(line, ColorScheme.NORMAL)));
 		if(GameMaster.activeGame instanceof TimerModule){
-			int seconds = Math.round(((TimerModule) GameMaster.activeGame).getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart) / 1000f);
+			long millis = ((TimerModule) GameMaster.activeGame).getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
+			int seconds = Math.round(millis / 1000F);
 			int mins = seconds / 60;
 			sender.sendMessage(ChatUtils.centerAlign(ChatUtils.format("[[" + mins + "]] minutes and [[" + seconds % 60 + "]] seconds remain", ColorScheme.NORMAL)));
 		}
