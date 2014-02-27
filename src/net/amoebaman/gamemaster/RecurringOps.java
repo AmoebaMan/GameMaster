@@ -101,7 +101,7 @@ public class RecurringOps implements Runnable {
 			}
 		}
 		else{
-			
+			StatusBarAPI.removeAllStatusBars();
 		}
 		/*
 		 * Update player names
