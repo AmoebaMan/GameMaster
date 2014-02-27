@@ -65,7 +65,7 @@ public abstract class TeamAutoGame extends AutoGame implements SafeSpawnModule{
 		Objective obj = getBoard().getObjective("score");
 		if(obj == null){
 			obj = getBoard().registerNewObjective("score", "dummy");
-			obj.setDisplayName(ChatColor.GOLD + "        -=[ Score ]=-        ");
+			obj.setDisplayName(ChatColor.GOLD + "  -=[ Score ]=-  ");
 			obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 		}
 	}
