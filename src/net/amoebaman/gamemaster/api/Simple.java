@@ -147,7 +147,7 @@ public class Simple {
 	 */
 	public static ChatColor getNameColor(Player player, TeamAutoGame game){
 		Team team = game.getTeam(player);
-		return team == null ? ChatColor.MAGIC : team.chat;
+		return team == null ? ChatColor.RESET : team.chat;
 	}
 
 	/**
