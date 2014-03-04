@@ -175,7 +175,8 @@ public class EventListener implements Listener {
 			event.setCancelled(true);
 	}
 	
-	@EventHandler(priority=EventPriority.LOW)
+	@SuppressWarnings("deprecation")
+    @EventHandler(priority=EventPriority.LOW)
 	public void playerJoin(final PlayerJoinEvent event){
 		final Player player = event.getPlayer();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(GameMaster.plugin(), new Runnable(){ public void run(){
@@ -216,6 +217,12 @@ public class EventListener implements Listener {
 		for(Player other : Bukkit.getOnlinePlayers())
 			if(other.hasPermission("gamemaster.admin"))
 				other.playSound(other.getLocation(), Sound.LEVEL_UP, 0.5f, 1f);
+		/*
+		 * Play them the intro sound
+		 */
+		Bukkit.getScheduler().scheduleSyncDelayedTask(GameMaster.plugin(), new Runnable(){ public void run(){
+			player.playSound(player.getLocation(), "records.13", Integer.MAX_VALUE, 1);
+		}}, 60);
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)

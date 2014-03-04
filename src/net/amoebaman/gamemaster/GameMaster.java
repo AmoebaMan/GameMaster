@@ -75,7 +75,7 @@ public class GameMaster extends JavaPlugin{
 	public static AutoGame activeGame, nextGame, lastGame;
 	public static GameMap activeMap, nextMap;
 	
-	public static MasterStatus status;
+	public static MasterStatus status = MasterStatus.PREP;
 	public static Location mainLobby, fireworksLaunch;
 	public static GameMap editMap;
 	public static int recurringOpsTaskID, worldTimeLock;
@@ -349,6 +349,9 @@ public class GameMaster extends JavaPlugin{
 	
 	public static void resetPlayer(Player player){
 		clearInventory(player);
+		player.setHealth(player.getMaxHealth());
+		player.setFoodLevel(20);
+		player.setSaturation(20);
 		player.setDisplayName(player.getName());
 		player.setPlayerListName(player.getName());
 		lastDamage.remove(player);
