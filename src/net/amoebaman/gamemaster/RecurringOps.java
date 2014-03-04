@@ -63,14 +63,14 @@ public class RecurringOps implements Runnable {
 				SafeSpawnModule game = (SafeSpawnModule) GameMaster.activeGame;
 				
 				for(Player player : GameMaster.getPlayers()){
-					if(game.getRespawnLoc(player) == null){
+					if(game.getSafeLoc(player) == null){
 						GameMaster.activeGame.removePlayer(player);
 						GameMaster.activeGame.addPlayer(player);
 					}
-					if(player.getLocation().distance(game.getRespawnLoc(player)) < game.getSpawnRadius(player)){
+					if(player.getLocation().distance(game.getSafeLoc(player)) < game.getSpawnRadius(player)){
 						if(System.currentTimeMillis() - GameMaster.lastDamage.get(player) < 1000 * game.getSpawnReentryDelaySeconds(player)){
 							player.damage(1);
-							player.setVelocity(player.getLocation().clone().toVector().subtract(game.getRespawnLoc(player).clone().toVector()).multiply(0.25));
+							player.setVelocity(player.getLocation().clone().toVector().subtract(game.getSafeLoc(player).clone().toVector()).multiply(0.25));
 							player.sendMessage(ChatColor.RED + "You can't re-enter spawn for " + (game.getSpawnReentryDelaySeconds(player) - ((System.currentTimeMillis() - GameMaster.lastDamage.get(player)) / 1000) ) + " more seconds");
 						}
 						else

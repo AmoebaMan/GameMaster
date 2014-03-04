@@ -12,6 +12,7 @@ import net.amoebaman.utils.ChatUtils.ColorScheme;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -117,6 +118,8 @@ public abstract class TeamAutoGame extends AutoGame implements SafeSpawnModule{
 	public int getProperSize(Team team){
 		return GameMaster.getPlayers().size() / getActiveTeams(GameMaster.activeMap).size();
 	}
+	
+	public abstract Location getRespawnLoc(Player player);
 
 	public abstract void balanceTeams();
 

@@ -139,11 +139,11 @@ public class EventListener implements Listener {
 			 */
 			if(GameMaster.activeGame instanceof SafeSpawnModule){
 				SafeSpawnModule game = (SafeSpawnModule) GameMaster.activeGame;
-				if(victim.getLocation().distance(game.getRespawnLoc(victim)) < game.getSpawnRadius(victim)){
+				if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
 					event.setCancelled(true);
 					damager.sendMessage(ChatUtils.format("You can't damage enemies that are in their spawn", ColorScheme.ERROR));
 				}
-				if(damager.getLocation().distance(game.getRespawnLoc(damager)) < game.getSpawnRadius(damager) && victim.getLocation().distance(game.getRespawnLoc(damager)) > game.getSpawnRadius(damager)){
+				if(damager.getLocation().distance(game.getSafeLoc(damager)) < game.getSpawnRadius(damager) && victim.getLocation().distance(game.getSafeLoc(damager)) > game.getSpawnRadius(damager)){
 					event.setCancelled(true);
 					damager.sendMessage(ChatUtils.format("You can't attack enemies from the safety of your spawn", ColorScheme.ERROR));
 				}
@@ -356,7 +356,7 @@ public class EventListener implements Listener {
 	public void giveKit(GiveKitEvent event){
 		final Player player = event.getPlayer();
 		if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && GameMaster.status == MasterStatus.RUNNING)
-			if(GameMaster.activeGame instanceof SafeSpawnModule && player.getLocation().distance(((SafeSpawnModule) GameMaster.activeGame).getRespawnLoc(player)) > 10)
+			if(GameMaster.activeGame instanceof RespawnModule && player.getLocation().distance(((RespawnModule) GameMaster.activeGame).getRespawnLoc(player)) > 10)
 				if(!event.getContext().overrides && event.getContext() != GiveKitContext.SIGN_TAKEN && !player.hasPermission("gamemaster.globalkit")){
 					player.sendMessage(ChatUtils.format("You must be within [[10 blocks]] of your spawn to choose a kit.", ColorScheme.ERROR));
 					event.setCancelled(true);
@@ -457,11 +457,11 @@ public class EventListener implements Listener {
 				if(GameMaster.activeGame instanceof TeamAutoGame){
 					TeamAutoGame game = (TeamAutoGame) GameMaster.activeGame;
 					if(game.getTeam(thrower) != game.getTeam(victim)){
-						if(victim.getLocation().distance(game.getRespawnLoc(victim)) < game.getSpawnRadius(victim)){
+						if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
 							event.setIntensity(victim, 0);
 							thrower.sendMessage(ChatUtils.format("You can't damage enemies that are in their spawn", ColorScheme.ERROR));
 						}
-						if(thrower.getLocation().distance(game.getRespawnLoc(thrower)) < game.getSpawnRadius(thrower) && victim.getLocation().distance(game.getRespawnLoc(thrower)) >= game.getSpawnRadius(thrower)){
+						if(thrower.getLocation().distance(game.getSafeLoc(thrower)) < game.getSpawnRadius(thrower) && victim.getLocation().distance(game.getSafeLoc(thrower)) >= game.getSpawnRadius(thrower)){
 							event.setIntensity(victim, 0);
 							thrower.sendMessage(ChatUtils.format("You can't damage enemies out of your spawn", ColorScheme.ERROR));
 						}

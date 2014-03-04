@@ -7,6 +7,6 @@ public interface SafeSpawnModule{
 	
 	public int getSpawnRadius(Player player);
 	public int getSpawnReentryDelaySeconds(Player player);
-	public Location getRespawnLoc(Player player);
+	public Location getSafeLoc(Player player);
 	
 }
