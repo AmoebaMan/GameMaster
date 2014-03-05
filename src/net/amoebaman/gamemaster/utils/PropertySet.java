@@ -17,7 +17,7 @@ public class PropertySet extends MemoryConfiguration{
 	}
 	
 	public Location getLocation(String path){
-		return S_Loc.stringLoad(getString(path));
+		return S_Loc.stringLoad(getString(path), true);
 	}
 	
 	public List<Location> getLocationList(String path){
@@ -26,7 +26,7 @@ public class PropertySet extends MemoryConfiguration{
 			return null;
 		List<Location> locs = new ArrayList<Location>();
 		for(String str : strs)
-			locs.add(S_Loc.stringLoad(str));
+			locs.add(S_Loc.stringLoad(str, true));
 		if(locs.isEmpty())
 			return null;
 		return locs;
@@ -39,7 +39,7 @@ public class PropertySet extends MemoryConfiguration{
 		Map<String,Location> map = new HashMap<String,Location>();
 		for(String str : strs){
 			String[] split = str.split(":");
-			map.put(split[0], S_Loc.stringLoad(split[1]));
+			map.put(split[0], S_Loc.stringLoad(split[1], true));
 		}
 		if(map.isEmpty())
 			return null;

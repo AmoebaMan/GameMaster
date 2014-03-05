@@ -108,10 +108,10 @@ public class GameMaster extends JavaPlugin{
 			getConfig().load(configFile);
 			getConfig().options().copyDefaults();
 			getConfig().save(configFile);
-			mainLobby = S_Loc.stringLoad(getConfig().getString("main-lobby"));
+			mainLobby = S_Loc.stringLoad(getConfig().getString("main-lobby"), true);
 			if(mainLobby == null)
 				mainLobby = new Location(Bukkit.getWorlds().get(0), 0.5, 80, 0.5);
-			fireworksLaunch = S_Loc.stringLoad(getConfig().getString("fireworks-launch"));
+			fireworksLaunch = S_Loc.stringLoad(getConfig().getString("fireworks-launch"), true);
 			if(fireworksLaunch == null)
 				fireworksLaunch = mainLobby.clone();
 			
@@ -440,7 +440,7 @@ public class GameMaster extends JavaPlugin{
 	        return;
         }
 		for(String key : repairYaml.getKeys(false)){
-			Block block = S_Loc.stringLoad(key).getBlock();
+			Block block = S_Loc.stringLoad(key, false).getBlock();
 			String[] split = repairYaml.getString(key).split(" ");
 			if(block.getType() == Material.CHEST)
 				((Chest) block.getState()).getBlockInventory().clear();
