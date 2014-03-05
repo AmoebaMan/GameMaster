@@ -105,6 +105,8 @@ public class EventListener implements Listener {
 				damager = (Player) GenUtil.getTrueCulprit((EntityDamageByEntityEvent) event);
 			}
 			catch(ClassCastException cce){}
+			if(damager == null)
+				return;
 			/*
 			 * Teammates can't hurt each other
 			 */
@@ -279,8 +281,11 @@ public class EventListener implements Listener {
 		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN && event.getView().getTopInventory() != null)
 			switch(event.getView().getTopInventory().getType()){
 				case CRAFTING: case CREATIVE: case PLAYER:
-					event.setCancelled(true);
+					event.setCancelled(false);
+					break;
 				default:
+					event.setCancelled(true);
+					break;
 			}
 	}
 	
