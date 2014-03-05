@@ -6,7 +6,7 @@ import net.amoebaman.gamemaster.modules.SafeSpawnModule;
 import net.amoebaman.gamemaster.modules.TimerModule;
 import net.amoebaman.utils.ChatUtils;
 import net.amoebaman.utils.ChatUtils.ColorScheme;
-import net.amoebaman.utils.StatusBarAPI;
+import net.amoebaman.utils.nms.StatusBar;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -87,7 +87,7 @@ public class RecurringOps implements Runnable {
 				long millis = game.getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
 				int seconds = Math.round(millis / 1000F);
 				int mins = seconds / 60;
-				StatusBarAPI.setAllStatusBars(ChatUtils.format("[[" + GameMaster.activeGame.getGameName() + "]] on [[" + GameMaster.activeMap.name + "]] - [[" + mins + ":" + (seconds % 60 < 10 ? "0" + (seconds % 60) : seconds % 60) + "]]", ColorScheme.HIGHLIGHT), 1.0f * seconds / (game.getGameLengthMinutes() * 60), 1);
+				StatusBar.setAllStatusBars(ChatUtils.format("[[" + GameMaster.activeGame.getGameName() + "]] on [[" + GameMaster.activeMap.name + "]] - [[" + mins + ":" + (seconds % 60 < 10 ? "0" + (seconds % 60) : seconds % 60) + "]]", ColorScheme.HIGHLIGHT), 1.0f * seconds / (game.getGameLengthMinutes() * 60), 1);
 				
 				if(millis <= 1000)
 					game.end();
@@ -101,7 +101,7 @@ public class RecurringOps implements Runnable {
 			}
 		}
 		else{
-			StatusBarAPI.removeAllStatusBars();
+			StatusBar.removeAllStatusBars();
 		}
 		/*
 		 * Update player names

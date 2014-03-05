@@ -19,13 +19,14 @@ import net.amoebaman.gamemaster.api.GameMap;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
 import net.amoebaman.gamemaster.modules.MessagerModule;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.CommandController;
-import net.amoebaman.utils.PlayerMap;
-import net.amoebaman.utils.S_Loc;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
+import net.amoebaman.utils.ChatUtils;
+import net.amoebaman.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.CommandController;
+import net.amoebaman.utils.GenUtil;
+import net.amoebaman.utils.S_Loc;
+import net.amoebaman.utils.maps.PlayerMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -38,8 +39,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
-import org.bukkit.entity.Wolf;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
@@ -400,14 +399,11 @@ public class GameMaster extends JavaPlugin{
 	 */
 	public static Player getKiller(Player victim){
 		Player killer = victim.getKiller();
-		if(killer == null && victim.getLastDamageCause() instanceof EntityDamageByEntityEvent){
-			EntityDamageByEntityEvent damage = (EntityDamageByEntityEvent) victim.getLastDamageCause();
-			if(damage.getDamager() instanceof Player)
-				killer = (Player) damage.getDamager();
-			if(damage.getDamager() instanceof Wolf && ((Wolf) damage.getDamager()).getOwner() instanceof Player)
-				killer = (Player) ((Wolf) damage.getDamager()).getOwner();
-			if(damage.getDamager() instanceof Projectile && ((Projectile) damage.getDamager()).getShooter() instanceof Player)
-				killer = (Player) ((Projectile) damage.getDamager()).getShooter();
+		if(killer == null){
+			try{
+				killer = (Player) GenUtil.getTrueCulprit((EntityDamageByEntityEvent) victim.getLastDamageCause());
+			}
+			catch(ClassCastException cce){}
 		}
 		return killer;
 	}

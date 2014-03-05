@@ -6,33 +6,27 @@ import net.amoebaman.gamemaster.enums.PlayerStatus;
 import net.amoebaman.gamemaster.modules.MessagerModule;
 import net.amoebaman.gamemaster.modules.RespawnModule;
 import net.amoebaman.gamemaster.modules.SafeSpawnModule;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
-import net.amoebaman.utils.PlayerMap;
-import net.amoebaman.utils.StatusBarAPI;
 import net.amoebaman.kitmaster.enums.GiveKitContext;
 import net.amoebaman.kitmaster.utilities.ClearKitsEvent;
 import net.amoebaman.kitmaster.utilities.GiveKitEvent;
 import net.amoebaman.statmaster.StatMaster;
-import net.amoebaman.statmaster.events.KillingSpreeEvent;
-import net.amoebaman.statmaster.events.MultiKillEvent;
+import net.amoebaman.utils.ChatUtils;
+import net.amoebaman.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.GenUtil;
+import net.amoebaman.utils.maps.PlayerMap;
+import net.amoebaman.utils.nms.StatusBar;
+import net.minecraft.util.com.google.common.collect.Lists;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.Sound;
 import org.bukkit.World;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Minecart;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Tameable;
 import org.bukkit.entity.ThrownPotion;
-import org.bukkit.entity.Vehicle;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -40,41 +34,34 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.PotionSplashEvent;
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
-import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.server.ServerListPingEvent;
-import org.bukkit.event.vehicle.VehicleDamageEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 
+@SuppressWarnings("deprecation")
 public class EventListener implements Listener {
 	
-	@EventHandler(priority=EventPriority.LOW)
+	@EventHandler
 	public void blockPlace(BlockPlaceEvent event){
 		if(GameMaster.getStatus(event.getPlayer()) != PlayerStatus.ADMIN)
 			event.setCancelled(true);
 	}
 	
-	@EventHandler(priority=EventPriority.LOW)
+	@EventHandler
 	public void blockBreak(BlockBreakEvent event){
 		if(GameMaster.getStatus(event.getPlayer()) != PlayerStatus.ADMIN)
 			event.setCancelled(true);
@@ -110,22 +97,14 @@ public class EventListener implements Listener {
 		 * We're only really concerned about players damaged by entities here...
 		 */
 		if(event instanceof EntityDamageByEntityEvent){
-			EntityDamageByEntityEvent eEvent = (EntityDamageByEntityEvent) event;
 			/*
 			 * Determine who did the damage
 			 */
 			Player damager = null;
-			if(eEvent.getDamager() instanceof Player)
-				damager = (Player) eEvent.getDamager();
-			if(eEvent.getDamager() instanceof Projectile){
-				Projectile proj = (Projectile) eEvent.getDamager();
-				if(proj.getShooter() instanceof Player)
-					damager = (Player) proj.getShooter();
+			try{
+				damager = (Player) GenUtil.getTrueCulprit((EntityDamageByEntityEvent) event);
 			}
-			if(eEvent.getDamager() instanceof Tameable && ((Tameable) eEvent.getDamager()).getOwner() instanceof Player)
-				damager = (Player) ((Tameable) eEvent.getDamager()).getOwner();
-			if(damager == null)
-				return;
+			catch(ClassCastException cce){}
 			/*
 			 * Teammates can't hurt each other
 			 */
@@ -164,19 +143,18 @@ public class EventListener implements Listener {
 			return;
 		if(GameMaster.status.active && GameMaster.activeGame instanceof SafeSpawnModule){
 			final Player player = (Player) event.getEntity();
-			if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && (event.getCause() == DamageCause.ENTITY_ATTACK || event.getCause() == DamageCause.PROJECTILE || event.getCause() == DamageCause.MAGIC))
+			if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && (event.getCause() == DamageCause.ENTITY_ATTACK || event.getCause() == DamageCause.PROJECTILE || event.getCause() == DamageCause.MAGIC || event.getCause() == DamageCause.POISON))
 				GameMaster.lastDamage.put(player, System.currentTimeMillis());
 		}
 	}
 	
-	@EventHandler(priority=EventPriority.LOW)
+	@EventHandler
 	public void foodLevelChange(FoodLevelChangeEvent event){
-		if(GameMaster.status != MasterStatus.RUNNING || GameMaster.getStatus((Player) event.getEntity()) == PlayerStatus.ADMIN)
+		if(GameMaster.status != MasterStatus.RUNNING)
 			event.setCancelled(true);
 	}
 	
-	@SuppressWarnings("deprecation")
-    @EventHandler(priority=EventPriority.LOW)
+    @EventHandler
 	public void playerJoin(final PlayerJoinEvent event){
 		final Player player = event.getPlayer();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(GameMaster.plugin(), new Runnable(){ public void run(){
@@ -211,40 +189,23 @@ public class EventListener implements Listener {
 			else
 				player.teleport(GameMaster.mainLobby);
 		}
-		/*
-		 * Notify admins with a sound
-		 */
-		for(Player other : Bukkit.getOnlinePlayers())
-			if(other.hasPermission("gamemaster.admin"))
-				other.playSound(other.getLocation(), Sound.LEVEL_UP, 0.5f, 1f);
-		/*
-		 * Play them the intro sound
-		 */
-		Bukkit.getScheduler().scheduleSyncDelayedTask(GameMaster.plugin(), new Runnable(){ public void run(){
-			player.playSound(player.getLocation(), "records.13", Integer.MAX_VALUE, 1);
-		}}, 60);
 	}
 	
-	@EventHandler(priority=EventPriority.LOW)
+	@EventHandler
 	public void playerQuit(PlayerQuitEvent event){
 		Player player = event.getPlayer();
-		GameMaster.players.remove(player);
-		GameMaster.lastDamage.remove(player);
-		StatusBarAPI.removeStatusBar(player);
+		StatusBar.removeStatusBar(player);
 		if(GameMaster.status.active && GameMaster.getStatus(player) == PlayerStatus.PLAYING){
 			player.teleport(GameMaster.mainLobby);
 			GameMaster.resetPlayer(player);
 			GameMaster.activeGame.removePlayer(player);
 			player.setPlayerListName(player.getName());
 		}
-		for(Player other : Bukkit.getOnlinePlayers())
-			if(other.hasPermission("gamemaster.admin"))
-				other.playSound(other.getLocation(), Sound.ENDERDRAGON_GROWL, 0.5f, 1f);
 	}
 	
-	@EventHandler(priority=EventPriority.LOW)
+	@EventHandler
 	public void playerKick(PlayerKickEvent event){
-		playerQuit(new PlayerQuitEvent(event.getPlayer(), "redirect"));
+		playerQuit(new PlayerQuitEvent(event.getPlayer(), "simulation"));
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
@@ -301,7 +262,7 @@ public class EventListener implements Listener {
 		GameMaster.lastDamage.remove(event.getEntity());
 		if(event instanceof PlayerDeathEvent){
 			Player player = (Player) event.getEntity();
-			StatusBarAPI.removeStatusBar(player);
+			StatusBar.removeStatusBar(player);
 			if(splashHarms.containsKey(player) && (player.getLastDamageCause().getCause() == DamageCause.MAGIC || player.getLastDamageCause().getCause() == DamageCause.WITHER)){
 				Player thrower = Bukkit.getPlayer(splashHarms.get(player));
 				if(thrower != null){
@@ -313,17 +274,14 @@ public class EventListener implements Listener {
 	}
 	
 	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
-	public void inventoryClick(InventoryClickEvent event){
+	public void forbidChestStorage(InventoryClickEvent event){
 		Player player = (Player) event.getWhoClicked();
-		if(GameMaster.getStatus(player) == PlayerStatus.PLAYING){
-			Inventory topInv = event.getView().getTopInventory();
-			if(topInv != null && (topInv.getHolder() instanceof BlockState || topInv.getHolder() instanceof Vehicle))
-				event.setCancelled(true);
-		}
+		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN && event.getView().getTopInventory() != null)
+			event.setCancelled(true);
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
-	public void playerChat(AsyncPlayerChatEvent event){
+	public void teamChat(AsyncPlayerChatEvent event){
 		Player player = event.getPlayer();
 		if(GameMaster.teamChatters.contains(player) && GameMaster.getStatus(player) == PlayerStatus.PLAYING && GameMaster.status.active && GameMaster.activeGame instanceof TeamAutoGame){
 			TeamAutoGame game = (TeamAutoGame) GameMaster.activeGame;
@@ -353,7 +311,7 @@ public class EventListener implements Listener {
 	}
 	
 	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
-	public void giveKit(GiveKitEvent event){
+	public void restrictCommandKitsToSpawns(GiveKitEvent event){
 		final Player player = event.getPlayer();
 		if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && GameMaster.status == MasterStatus.RUNNING)
 			if(GameMaster.activeGame instanceof RespawnModule && player.getLocation().distance(((RespawnModule) GameMaster.activeGame).getRespawnLoc(player)) > 10)
@@ -365,7 +323,7 @@ public class EventListener implements Listener {
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
-	public void clearKits(ClearKitsEvent event){
+	public void killProjectilesOnKitChange(ClearKitsEvent event){
 		Player player = event.getPlayer();
 		for(World world : Bukkit.getWorlds())
 			for(Entity e : world.getEntities())
@@ -376,75 +334,9 @@ public class EventListener implements Listener {
 				}
 	}
 	
-	@EventHandler(priority=EventPriority.LOW)
-	public void playerInteract(PlayerInteractEvent event){
-		final Player player = event.getPlayer();
-		/*
-		 * Prevent players messing with scenery
-		 */
-		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN && event.getAction().name().contains("CLICK_BLOCK")){
-			Material mat = event.getClickedBlock().getType();
-			if(mat == Material.TRAP_DOOR || mat == Material.LEVER || mat == Material.ITEM_FRAME)
-				event.setCancelled(true);
-			for(BlockFace face : BlockFace.values())
-				if(event.getClickedBlock().getRelative(face).getType() == Material.FIRE)
-					event.setCancelled(true);
-		}
-	}
-	
-	/*
-	 * This is needed to make infinite stacks of consumable items work properly.
-	 */
-	@EventHandler(priority=EventPriority.LOW)
-	public void playerItemConsume(PlayerItemConsumeEvent event){
-		ItemStack item = event.getItem().clone();
-		if(item.getAmount() < 0){
-			/*
-			 * According to Bukkit APIDocs, modifying the event item consumed will
-			 * apply the effects the new item, but WILL NOT consume the original.
-			 * Changing the amount of the item should be sufficient to trigger this.
-			 */
-			item.setAmount(1);
-			event.setItem(item);
-		}
-	}
-	
-	@EventHandler(priority=EventPriority.LOW)
-	public void hangingBreak(HangingBreakByEntityEvent event){
-		Player player = null;
-		if(event.getEntity() instanceof Player)
-			player = (Player) event.getEntity();
-		if(event.getEntity() instanceof Projectile){
-			Projectile proj = (Projectile) event.getEntity();
-			if(proj.getShooter() instanceof Player)
-				player = (Player) proj.getShooter();
-		}
-		if(player == null)
-			return;
-		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN)
-			event.setCancelled(true);
-	}
-	
-	@EventHandler(priority=EventPriority.LOW)
-	public void vehicleDamage(VehicleDamageEvent event){
-		Player player = null;
-		if(event.getAttacker() instanceof Player)
-			player = (Player) event.getAttacker();
-		if(event.getAttacker() instanceof Projectile){
-			Projectile proj = (Projectile) event.getAttacker();
-			if(proj.getShooter() instanceof Player)
-				player = (Player) proj.getShooter();
-		}
-		if(player == null)
-			return;
-		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN && event.getVehicle() instanceof Minecart)
-			event.setCancelled(true);
-	}
-	
 	private static PlayerMap<String> splashHarms = new PlayerMap<String>();
-	@SuppressWarnings("deprecation")
-    @EventHandler(priority=EventPriority.LOW)
-	public void potionSplash(PotionSplashEvent event){
+    @EventHandler
+	public void managePotionSplashes(PotionSplashEvent event){
 		ThrownPotion potion = event.getPotion();
 		Player thrower = null;
 		if(potion.getShooter() instanceof Player)
@@ -466,20 +358,11 @@ public class EventListener implements Listener {
 							thrower.sendMessage(ChatUtils.format("You can't damage enemies out of your spawn", ColorScheme.ERROR));
 						}
 					}
-					else if(!victim.equals(thrower))
+					else if(game.getTeam(thrower) == game.getTeam(victim))
 						for(PotionEffect effect : potion.getEffects())
-							switch(effect.getType().getId()){
-								case 2:
-								case 4:
-								case 7:
-								case 9:
-								case 15:
-								case 17:
-								case 18:
-								case 19:
-								case 20:
-									event.setIntensity(victim, 0);
-							}
+							//List of all negative potion effect IDs (this is for friendly-fire)
+							if(Lists.newArrayList(2,4,7,9,15,17,18,19,20).contains(effect.getType().getId()))
+								event.setIntensity(victim, 0);
 				}
 				for(PotionEffect effect : potion.getEffects())
 					if(effect.getType().equals(PotionEffectType.HARM) || effect.getType().equals(PotionEffectType.WITHER))
@@ -488,21 +371,7 @@ public class EventListener implements Listener {
 		}
 	}
 	
-	private static PlayerMap<Long> teleports = new PlayerMap<Long>(0L);
-	@EventHandler(priority=EventPriority.LOW)
-	public void preventEnderPearlSpam(PlayerTeleportEvent event){
-		Player player = event.getPlayer();
-		if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && event.getCause() == TeleportCause.ENDER_PEARL){
-			if(System.currentTimeMillis() - teleports.get(player) < 10000){
-				player.sendMessage(ChatUtils.format("You need to wait [[" + (int)((teleports.get(player) + 10000 - System.currentTimeMillis()) / 1000) + "]] seconds to teleport again", ColorScheme.ERROR));
-				event.setCancelled(true);
-			}
-			else
-				teleports.put(player, System.currentTimeMillis());
-		}
-	}
-	
-	@EventHandler(priority=EventPriority.LOW)
+	@EventHandler
 	public void updateServerList(ServerListPingEvent event){
 		switch(GameMaster.status){
 			case INTERMISSION:
@@ -515,22 +384,6 @@ public class EventListener implements Listener {
 			case SUSPENDED:
 				event.setMotd(ChatUtils.format("Playing [[" + GameMaster.activeGame + "]] on [[" + GameMaster.activeMap + "]]", ColorScheme.HIGHLIGHT));
 				break;
-		}
-	}
-	
-	@EventHandler(priority=EventPriority.LOW)
-	public void multiKill(MultiKillEvent event){
-		if(event.getAmount() > 2){
-			StatMaster.getHandler().adjustStat(event.getPlayer(), "charges", (event.getAmount() - 2) * 0.25);
-			event.getPlayer().sendMessage(ChatUtils.format("You have received [[" + (event.getAmount() - 2) * 0.25 + "]] charges for your [[" + event.getAmount() + "]]x multikill", ColorScheme.HIGHLIGHT));
-		}
-	}
-	
-	@EventHandler(priority=EventPriority.LOW)
-	public void killingSpree(KillingSpreeEvent event){
-		if(event.getSpree() > 3 && event.isEnded()){
-			StatMaster.getHandler().adjustStat(event.getPlayer(), "charges", (event.getSpree() - 3) * 0.1);
-			event.getPlayer().sendMessage(ChatUtils.format("You have received [[" + ((event.getSpree() - 3) * 0.1) + "]] charges for your [[" + event.getSpree() + "]] kill spree", ColorScheme.HIGHLIGHT));
 		}
 	}
 	
