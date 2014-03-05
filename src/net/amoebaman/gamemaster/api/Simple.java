@@ -25,6 +25,7 @@ import net.amoebaman.gamemaster.utils.Utils;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.ChatUtils;
 import net.amoebaman.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.GenUtil;
 
 public class Simple {
 	
@@ -85,7 +86,7 @@ public class Simple {
 						leastPlayers = game.getSize(mostNeedy);
 					}
 				if(mostNeedy != null)
-					game.swapTeam(Utils.getRandomElement(game.getPlayers(team)), mostNeedy);
+					game.swapTeam(GenUtil.getRandomElement(game.getPlayers(team)), mostNeedy);
 			}
 		}
 	}
@@ -102,7 +103,7 @@ public class Simple {
 		Team oldTeam = game.getTeam(player);
 		Team newTeam = oldTeam;
 		do{
-			newTeam = Utils.getRandomElement(activeTeams);
+			newTeam = GenUtil.getRandomElement(activeTeams);
 		}
 		while(newTeam == oldTeam);
 		game.swapTeam(player, newTeam);

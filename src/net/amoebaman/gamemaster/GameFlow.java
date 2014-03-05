@@ -6,7 +6,7 @@ import net.amoebaman.gamemaster.enums.Team;
 import net.amoebaman.gamemaster.modules.MessagerModule;
 import net.amoebaman.utils.ChatUtils;
 import net.amoebaman.utils.ChatUtils.ColorScheme;
-import net.amoebaman.gamemaster.utils.Utils;
+import net.amoebaman.utils.GenUtil;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.statmaster.StatMaster;
 
@@ -88,7 +88,7 @@ public class GameFlow {
 		 * Choose a random game if no votes were cast
 		 */
 		if(GameMaster.votes.isEmpty()){
-			GameMaster.activeGame = Utils.getRandomElement(GameMaster.games);
+			GameMaster.activeGame = GenUtil.getRandomElement(GameMaster.games);
 			Bukkit.broadcastMessage(ChatUtils.format("No votes were cast, randomly selecting the next game", ColorScheme.HIGHLIGHT));
 		}
 		/*
@@ -103,7 +103,7 @@ public class GameFlow {
 			 * If something has gone wrong, choose a random game
 			 */
 			if(GameMaster.activeGame == null){
-				GameMaster.activeGame = Utils.getRandomElement(GameMaster.games);
+				GameMaster.activeGame = GenUtil.getRandomElement(GameMaster.games);
 				Bukkit.broadcastMessage(ChatUtils.format("An error occurred while tallying votes, choosing a random game", ColorScheme.ERROR));
 			}
 			/*
@@ -122,7 +122,7 @@ public class GameFlow {
 		 * If something has gone wrong, choose a random game
 		 */
 		if(GameMaster.activeGame == null){
-			GameMaster.activeGame = Utils.getRandomElement(GameMaster.games);
+			GameMaster.activeGame = GenUtil.getRandomElement(GameMaster.games);
 			Bukkit.broadcastMessage(ChatUtils.format("An error occurred while selecting the game, choosing a random game", ColorScheme.ERROR));
 		}
 		/*
@@ -150,7 +150,7 @@ public class GameFlow {
 		 * Choose a random map if no votes were cast
 		 */
 		if(GameMaster.votes.isEmpty()){
-			GameMaster.activeMap = Utils.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
+			GameMaster.activeMap = GenUtil.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
 			Bukkit.broadcastMessage(ChatUtils.format("No votes were cast, randomly selecting the next map", ColorScheme.HIGHLIGHT));
 		}
 		/*
@@ -165,7 +165,7 @@ public class GameFlow {
 			 * If something has gone wrong, choose a random map
 			 */
 			if(GameMaster.activeMap == null){
-				GameMaster.activeMap = Utils.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
+				GameMaster.activeMap = GenUtil.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
 				Bukkit.broadcastMessage(ChatUtils.format("An error occurred while tallying votes, choosing a random map", ColorScheme.ERROR));
 			}
 			/*
@@ -184,7 +184,7 @@ public class GameFlow {
 		 * If something has gone wrong, choose a random map
 		 */
 		if(GameMaster.activeMap == null){
-			GameMaster.activeMap = Utils.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
+			GameMaster.activeMap = GenUtil.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
 			Bukkit.broadcastMessage(ChatUtils.format("An error occurred while selecting the map, choosing a random map", ColorScheme.ERROR));
 		}
 		/*

@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -17,14 +16,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 public class Utils {
-	
-	public static <E> E getRandomElement(Collection<E> set){
-		E element = null;
-		Iterator<E> it = set.iterator();
-		for(int i = 0; i < Math.random() * set.size() && it.hasNext(); i++)
-			element = it.next();
-		return element;
-	}
 	
 	public static List<Player> sort(Collection<Player> set){
 		if(set == null)
