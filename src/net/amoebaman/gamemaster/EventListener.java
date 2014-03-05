@@ -154,7 +154,7 @@ public class EventListener implements Listener {
 			event.setCancelled(true);
 	}
 	
-    @EventHandler
+	@EventHandler
 	public void playerJoin(final PlayerJoinEvent event){
 		final Player player = event.getPlayer();
 		Bukkit.getScheduler().scheduleSyncDelayedTask(GameMaster.plugin(), new Runnable(){ public void run(){
@@ -277,7 +277,11 @@ public class EventListener implements Listener {
 	public void forbidChestStorage(InventoryClickEvent event){
 		Player player = (Player) event.getWhoClicked();
 		if(GameMaster.getStatus(player) != PlayerStatus.ADMIN && event.getView().getTopInventory() != null)
-			event.setCancelled(true);
+			switch(event.getView().getTopInventory().getType()){
+				case CRAFTING: case CREATIVE: case PLAYER:
+					event.setCancelled(true);
+				default:
+			}
 	}
 	
 	@EventHandler(priority=EventPriority.LOW)
@@ -335,7 +339,7 @@ public class EventListener implements Listener {
 	}
 	
 	private static PlayerMap<String> splashHarms = new PlayerMap<String>();
-    @EventHandler
+	@EventHandler
 	public void managePotionSplashes(PotionSplashEvent event){
 		ThrownPotion potion = event.getPotion();
 		Player thrower = null;
