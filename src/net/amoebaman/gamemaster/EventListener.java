@@ -70,14 +70,7 @@ public class EventListener implements Listener {
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void entityDamageModify(final EntityDamageEvent event){
 		/*
-		 * Don't even bother if no event is running
-		 */
-		if(GameMaster.status != MasterStatus.RUNNING){
-			event.setCancelled(true);
-			return;
-		}
-		/*
-		 * Determine the victim
+		 * Determine the victim (we consider wolves part of their owners)
 		 */
 		Player victim = null;
 		if(event.getEntity() instanceof Player)
@@ -86,6 +79,13 @@ public class EventListener implements Listener {
 			victim = (Player) ((Tameable) event.getEntity()).getOwner();
 		if(victim == null)
 			return;
+		/*
+		 * Don't even bother if no event is running
+		 */
+		if(GameMaster.status != MasterStatus.RUNNING){
+			event.setCancelled(true);
+			return;
+		}
 		/*
 		 * Cancel if the victim isn't playing, or is respawning
 		 */
