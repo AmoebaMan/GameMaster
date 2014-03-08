@@ -107,10 +107,10 @@ public class GameMaster extends JavaPlugin{
 			getConfig().load(configFile);
 			getConfig().options().copyDefaults();
 			getConfig().save(configFile);
-			mainLobby = S_Loc.stringLoad(getConfig().getString("main-lobby"), true);
+			mainLobby = S_Loc.stringLoad(getConfig().getString("main-lobby"));
 			if(mainLobby == null)
 				mainLobby = new Location(Bukkit.getWorlds().get(0), 0.5, 80, 0.5);
-			fireworksLaunch = S_Loc.stringLoad(getConfig().getString("fireworks-launch"), true);
+			fireworksLaunch = S_Loc.stringLoad(getConfig().getString("fireworks-launch"));
 			if(fireworksLaunch == null)
 				fireworksLaunch = mainLobby.clone();
 			
@@ -174,8 +174,8 @@ public class GameMaster extends JavaPlugin{
 		 * Save up configurations
 		 */
 		try{
-			getConfig().set("main-lobby", S_Loc.stringSave(mainLobby, true));
-			getConfig().set("fireworks-launch", S_Loc.stringSave(fireworksLaunch, false));
+			getConfig().set("main-lobby", S_Loc.stringSave(mainLobby, true, true));
+			getConfig().set("fireworks-launch", S_Loc.stringSave(fireworksLaunch, true, false));
 			getConfig().save(configFile);
 			
 			YamlConfiguration mapsYaml = new YamlConfiguration();
@@ -413,7 +413,7 @@ public class GameMaster extends JavaPlugin{
 		YamlConfiguration repairYaml = new YamlConfiguration();
 		repairYaml.options().pathSeparator('/');
 		for(BlockState state : states)
-			repairYaml.set(S_Loc.stringSave(state.getLocation(), false), state.getTypeId() + " " + state.getRawData());
+			repairYaml.set(S_Loc.stringSave(state.getLocation(), true, false), state.getTypeId() + " " + state.getRawData());
 		try {
 	        repairYaml.save(repairFile);
         }
@@ -436,7 +436,7 @@ public class GameMaster extends JavaPlugin{
 	        return;
         }
 		for(String key : repairYaml.getKeys(false)){
-			Block block = S_Loc.stringLoad(key, false).getBlock();
+			Block block = S_Loc.stringLoad(key).getBlock();
 			String[] split = repairYaml.getString(key).split(" ");
 			if(block.getType() == Material.CHEST)
 				((Chest) block.getState()).getBlockInventory().clear();
