@@ -1,16 +1,23 @@
 package net.amoebaman.gamemaster;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.Team;
 import net.amoebaman.gamemaster.modules.MessagerModule;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
-import net.amoebaman.utils.GenUtil;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.statmaster.StatMaster;
+import net.amoebaman.utils.GenUtil;
+import net.amoebaman.utils.chat.Align;
+import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.utils.chat.JsonMessage;
+import net.amoebaman.utils.chat.Message;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
@@ -72,9 +79,9 @@ public class GameFlow {
 		/*
 		 * Broadcast status
 		 */
-		Bukkit.broadcastMessage(ChatUtils.format("We'll start the next game in [[one minute]]", ColorScheme.HIGHLIGHT));
+		Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("The next game will start in ").then("one minute").strong());
 		if(GameMaster.games.size() > 1)
-			Bukkit.broadcastMessage(ChatUtils.format("Vote for the next game with [[/vote <game>]]", ColorScheme.HIGHLIGHT));
+			Chat.broadcast(new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote for the next game"));
 		/*
 		 * Schedule the next phase
 		 */
@@ -89,7 +96,7 @@ public class GameFlow {
 		 */
 		if(GameMaster.votes.isEmpty()){
 			GameMaster.activeGame = GenUtil.getRandomElement(GameMaster.games);
-			Bukkit.broadcastMessage(ChatUtils.format("No votes were cast, randomly selecting the next game", ColorScheme.HIGHLIGHT));
+			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("No votes were cast").alternate().then(" - randomly choosing a game"));
 		}
 		/*
 		 * Otherwise...
@@ -102,10 +109,8 @@ public class GameFlow {
 			/*
 			 * If something has gone wrong, choose a random game
 			 */
-			if(GameMaster.activeGame == null){
+			if(GameMaster.activeGame == null)
 				GameMaster.activeGame = GenUtil.getRandomElement(GameMaster.games);
-				Bukkit.broadcastMessage(ChatUtils.format("An error occurred while tallying votes, choosing a random game", ColorScheme.ERROR));
-			}
 			/*
 			 * Clear the votes
 			 */
@@ -121,10 +126,8 @@ public class GameFlow {
 		/*
 		 * If something has gone wrong, choose a random game
 		 */
-		if(GameMaster.activeGame == null){
+		if(GameMaster.activeGame == null)
 			GameMaster.activeGame = GenUtil.getRandomElement(GameMaster.games);
-			Bukkit.broadcastMessage(ChatUtils.format("An error occurred while selecting the game, choosing a random game", ColorScheme.ERROR));
-		}
 		/*
 		 * Update status
 		 */
@@ -132,11 +135,11 @@ public class GameFlow {
 		/*
 		 * Broadcast
 		 */
-		ChatUtils.bigBroadcast(ColorScheme.HIGHLIGHT,
-				"The next game will be [[" + GameMaster.activeGame + "]]",
-				"Vote on the next map with [[/vote <map>]]",
-				"The game will start in [[30 seconds]]"
-				);
+		Chat.broadcast(
+				new Message(Scheme.HIGHLIGHT).then("The next game will be ").then(GameMaster.activeGame).strong().toString(),
+				new Message(Scheme.HIGHLIGHT).then("The game will start in ").then("30 seconds").strong().toString(),
+				new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote for the next map")
+		);
 		/*
 		 * Schedule the next phase
 		 */
@@ -151,7 +154,7 @@ public class GameFlow {
 		 */
 		if(GameMaster.votes.isEmpty()){
 			GameMaster.activeMap = GenUtil.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
-			Bukkit.broadcastMessage(ChatUtils.format("No votes were cast, randomly selecting the next map", ColorScheme.HIGHLIGHT));
+			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("No votes were cast").alternate().then(" - randomly choosing a map"));
 		}
 		/*
 		 * Otherwise...
@@ -164,10 +167,8 @@ public class GameFlow {
 			/*
 			 * If something has gone wrong, choose a random map
 			 */
-			if(GameMaster.activeMap == null){
+			if(GameMaster.activeMap == null)
 				GameMaster.activeMap = GenUtil.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
-				Bukkit.broadcastMessage(ChatUtils.format("An error occurred while tallying votes, choosing a random map", ColorScheme.ERROR));
-			}
 			/*
 			 * Clear the votes
 			 */
@@ -183,29 +184,8 @@ public class GameFlow {
 		/*
 		 * If something has gone wrong, choose a random map
 		 */
-		if(GameMaster.activeMap == null){
+		if(GameMaster.activeMap == null)
 			GameMaster.activeMap = GenUtil.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
-			Bukkit.broadcastMessage(ChatUtils.format("An error occurred while selecting the map, choosing a random map", ColorScheme.ERROR));
-		}
-		/*
-		 * Configure the world's time and weather as per the map's instruction
-		 */
-//		World world = GameMaster.activeMap.properties.getWorld("world");
-//		Time time = Time.matchString(GameMaster.activeMap.properties.getString("time"));
-//		if(time == Time.RANDOM)
-//			GameMaster.worldTimeLock = new Random().nextInt(24000);
-//		else
-//			GameMaster.worldTimeLock = time.ticks;
-//		Weather weather = Weather.matchString(GameMaster.activeMap.properties.getString("weather"));
-//		if(weather == Weather.RANDOM){
-//			world.setStorm(Math.random() > 0.7);
-//			if(world.hasStorm())
-//				world.setThundering(Math.random() > 0.5);
-//		}
-//		else{
-//			world.setStorm(weather == Weather.RAINING);
-//			world.setThundering(weather == Weather.STORMING);
-//		}
 		/*
 		 * Update status
 		 */
@@ -223,15 +203,16 @@ public class GameFlow {
 			 * Reset player tags to prevent general glitchiness
 			 */
 			for(Player player : GameMaster.getPlayers()){
-				player.sendMessage(ChatUtils.spacerLine());
+				
+				List<String> messages = new ArrayList<String>();
 				if(GameMaster.activeGame instanceof TeamAutoGame){
 					Team team = ((TeamAutoGame) GameMaster.activeGame).getTeam(player);
-					player.sendMessage(ChatUtils.centerAlign(ChatUtils.format("You are on the " + team.chat + team + "]] team", ColorScheme.HIGHLIGHT)));
+					messages.add(new Message(Scheme.HIGHLIGHT).then("You are on the ").then(team).color(team.chat).then(" team").toString());
 				}
 				if(GameMaster.activeGame instanceof MessagerModule)
-					for(String line : ((MessagerModule) GameMaster.activeGame).getWelcomeMessage(player))
-						player.sendMessage(ChatUtils.centerAlign(ChatUtils.format(line, ColorScheme.NORMAL)));
-				player.sendMessage(ChatUtils.spacerLine());
+					messages.addAll( ((MessagerModule) GameMaster.activeGame).getWelcomeMessage(player));
+
+				Chat.send(player, Align.box(messages, ""));
 			}
 		} }, 40);
 	}

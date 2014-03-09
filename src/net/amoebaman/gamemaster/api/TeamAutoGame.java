@@ -7,8 +7,9 @@ import java.util.Set;
 import net.amoebaman.gamemaster.GameMaster;
 import net.amoebaman.gamemaster.enums.Team;
 import net.amoebaman.gamemaster.modules.SafeSpawnModule;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.utils.chat.Message;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -106,7 +107,7 @@ public abstract class TeamAutoGame extends AutoGame implements SafeSpawnModule{
 		Team oldTeam = getTeam(player);
 		if(newTeam == oldTeam)
 			return;
-		player.sendMessage(ChatUtils.format("Your team is being swapped", ColorScheme.HIGHLIGHT));
+		Chat.send(player, new Message(Scheme.NORMAL).then("You've been swapped to the ").then(newTeam).color(newTeam.chat).then(" team"));
 		setTeam(player, newTeam);
 		player.teleport(getRespawnLoc(player));
 	}

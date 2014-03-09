@@ -4,11 +4,11 @@ import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.modules.SafeSpawnModule;
 import net.amoebaman.gamemaster.modules.TimerModule;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.utils.chat.Message;
 import net.amoebaman.utils.nms.StatusBar;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -87,13 +87,14 @@ public class RecurringOps implements Runnable {
 				long millis = game.getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
 				int seconds = Math.round(millis / 1000F);
 				int mins = seconds / 60;
-				StatusBar.setAllStatusBars(ChatUtils.format("[[" + GameMaster.activeGame.getGameName() + "]] on [[" + GameMaster.activeMap.name + "]] - [[" + mins + ":" + (seconds % 60 < 10 ? "0" + (seconds % 60) : seconds % 60) + "]]", ColorScheme.HIGHLIGHT), 1.0f * seconds / (game.getGameLengthMinutes() * 60), 1);
+				String status = new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame).strong().then(" on ").then(GameMaster.activeMap).strong().then(" - ").then(mins + ":" + (seconds % 60 < 10 ? "0" + (seconds % 60) : seconds % 60)).strong().toString();
+				StatusBar.setAllStatusBars(status, 1.0f * seconds / (game.getGameLengthMinutes() * 60), 1);
 				
 				if(millis <= 1000)
 					game.end();
 				else if(seconds % 60 == 0 && mins > 0){
 					if(!announcedMinute){
-						Bukkit.broadcastMessage(ChatUtils.format("[[" + mins + " minutes]] remain on the clock", ColorScheme.HIGHLIGHT));
+						Chat.broadcast(new Message(Scheme.HIGHLIGHT).then(mins + " minutes").strong().then(" remain on the clock"));
 						announcedMinute = true;
 					}}
 				else

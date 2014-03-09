@@ -4,6 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import net.amoebaman.gamemaster.GameFlow;
+import net.amoebaman.gamemaster.GameMaster;
+import net.amoebaman.gamemaster.enums.MasterStatus;
+import net.amoebaman.gamemaster.enums.Team;
+import net.amoebaman.gamemaster.utils.Utils;
+import net.amoebaman.statmaster.StatMaster;
+import net.amoebaman.utils.GenUtil;
+import net.amoebaman.utils.chat.Align;
+import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.CustomChar;
+import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.utils.chat.JsonMessage;
+import net.amoebaman.utils.chat.Message;
+import net.minecraft.util.com.google.common.collect.Lists;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -16,16 +31,6 @@ import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
-
-import net.amoebaman.gamemaster.GameFlow;
-import net.amoebaman.gamemaster.GameMaster;
-import net.amoebaman.gamemaster.enums.MasterStatus;
-import net.amoebaman.gamemaster.enums.Team;
-import net.amoebaman.gamemaster.utils.Utils;
-import net.amoebaman.statmaster.StatMaster;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
-import net.amoebaman.utils.GenUtil;
 
 public class Simple {
 	
@@ -135,7 +140,7 @@ public class Simple {
 	public static List<String> getStatus(TeamAutoGame game){
 		List<String> message = new ArrayList<String>();
 		for(Team team : game.getActiveTeams(GameMaster.activeMap))
-			message.add("The " + team.chat + team + "]] team has [[" + game.getScore(team) + "]] points");
+			message.add(new Message(Scheme.NORMAL).then("The ").then(team).color(team.chat).then(" team has ").then(game.getScore(team)).alternate().then(" points").toString());
 		return message;
 	}	
 	
@@ -187,10 +192,10 @@ public class Simple {
 			game.setScore(team, 0);
 		}
 		
-		ChatUtils.bigBroadcast(ColorScheme.HIGHLIGHT,
-				"[[" + GameMaster.activeGame.getGameName().toUpperCase() + "]] is starting",
-				"The map chosen is [[" + GameMaster.activeMap + "]]"
-				);
+		Chat.broadcast(Align.box(Lists.newArrayList(
+				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame.getGameName().toUpperCase()).strong().then(" is starting").toString(),
+				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeMap).strong().then(" will be the battlefield").toString()
+		), Scheme.HIGHLIGHT.normal.getColor() + "I"));
 		
 		List<Player> players = Utils.sort(GameMaster.getPlayers());
 		List<Set<Player>> split = Utils.split(players, activeTeams.size());
@@ -218,7 +223,11 @@ public class Simple {
 			if(game.getTeam(player) == winner){
 				StatMaster.getHandler().incrementStat(player, "wins");
 				StatMaster.getHandler().adjustStat(player, "charges", 0.5);
-				player.sendMessage(ChatUtils.format("You have received [[0.5]] charges for being on the winning team", ColorScheme.HIGHLIGHT));
+				Chat.send(player, new JsonMessage(Scheme.HIGHLIGHT)
+					.then("You have received ")
+					.then("0.5 charges").strong().tooltip(Scheme.HIGHLIGHT.normal + "You have " + StatMaster.getHandler().getStat(player, "charges") + " charges total")
+					.then(" for winning the game")
+				);
 			}
 			else
 				StatMaster.getHandler().incrementStat(player, "losses");
@@ -252,12 +261,14 @@ public class Simple {
 		
 		//Suspend the game and get ready to start the intermission
 		GameMaster.status = MasterStatus.SUSPENDED;
-		ChatUtils.bigBroadcast(ColorScheme.HIGHLIGHT,
-				"[[" + GameMaster.activeGame.getGameName().toUpperCase() + "]] is finished",
+		
+		Chat.broadcast(Align.box(Lists.newArrayList(
+				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame.getGameName().toUpperCase()).strong().then(" is finished").toString(),
 				winner == Team.NEUTRAL
-						? "The match ended in a draw"
-						: "The " + winner.chat + winner + "]] team has won the game"
-				);
+					? new Message(Scheme.HIGHLIGHT).then("The match ended in a draw").toString()
+					: new Message(Scheme.HIGHLIGHT).then("The ").then(winner).color(winner.chat).then(" team won the game").toString()
+		), Scheme.HIGHLIGHT.normal.getColor() + "I"));
+
 		Bukkit.getScheduler().scheduleSyncDelayedTask(game, new Runnable(){ public void run(){
 			GameFlow.startIntermission();
 		} }, 100);
@@ -269,7 +280,7 @@ public class Simple {
 	 * @param game the game that is being aborted
 	 */
 	public static void abort(AutoGame game){
-		Bukkit.broadcastMessage(ChatUtils.format("[[" + game + "]] has been aborted", ColorScheme.ERROR));
+		Chat.broadcast(new Message(Scheme.ERROR).then("The game was aborted by an operator"));
 	}
 	
 }

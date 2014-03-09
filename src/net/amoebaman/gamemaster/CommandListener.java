@@ -8,9 +8,6 @@ import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
 import net.amoebaman.gamemaster.enums.Team;
 import net.amoebaman.gamemaster.modules.TimerModule;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
-import net.amoebaman.utils.CommandController.CommandHandler;
 import net.amoebaman.gamemaster.utils.PropertySet;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.kitmaster.controllers.ItemController;
@@ -19,6 +16,14 @@ import net.amoebaman.kitmaster.handlers.HistoryHandler;
 import net.amoebaman.kitmaster.handlers.KitHandler;
 import net.amoebaman.kitmaster.objects.Kit;
 import net.amoebaman.statmaster.StatMaster;
+import net.amoebaman.utils.ChatUtils;
+import net.amoebaman.utils.ChatUtils.ColorScheme;
+import net.amoebaman.utils.CommandController.CommandHandler;
+import net.amoebaman.utils.chat.Align;
+import net.amoebaman.utils.chat.JsonMessage;
+import net.amoebaman.utils.chat.Message;
+import net.amoebaman.utils.chat.Scheme;
+import net.minecraft.util.com.google.common.collect.Lists;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -33,74 +38,78 @@ import org.bukkit.potion.PotionEffect;
 public class CommandListener {
 	
 	@CommandHandler(cmd = "game")
-	public void gameCmd(CommandSender sender, String[] args){
-		if(GameMaster.activeGame == null || !GameMaster.activeGame.isActive()){
-			sender.sendMessage(ChatUtils.format("There isn't a game running", ColorScheme.ERROR));
-			return;
-		}
+	public Object gameCmd(CommandSender sender, String[] args){
+		if(GameMaster.activeGame == null || !GameMaster.activeGame.isActive())
+			return new Message(Scheme.ERROR).then("There isn't a game running");
+		
 		Player context = sender instanceof Player? (Player) sender : null;
-		sender.sendMessage(ChatUtils.spacerLine());
-		sender.sendMessage(ChatUtils.centerAlign(ChatUtils.format("Currently playing [[" + GameMaster.activeGame + "]] on [[" + GameMaster.activeMap + "]]", ColorScheme.HIGHLIGHT)));
+		
+		List<String> status = Lists.newArrayList(
+				new Message(Scheme.HIGHLIGHT).then("Currently playing ").then(GameMaster.activeGame).strong().then(" on ").then(GameMaster.activeMap).strong().toString()   );
+		
 		if(GameMaster.activeGame instanceof TeamAutoGame && context != null && GameMaster.getStatus(context) == PlayerStatus.PLAYING){
 			Team team = ((TeamAutoGame) GameMaster.activeGame).getTeam(context);
-			sender.sendMessage(ChatUtils.centerAlign(ChatUtils.format("You are on the " + team.chat + team + "]] team", ColorScheme.HIGHLIGHT)));
+			status.add(new Message(Scheme.HIGHLIGHT).then("You are on the ").then(team).color(team.chat).then(" team").toString());
 		}
-		for(String line : GameMaster.activeGame.getStatus(context))
-			sender.sendMessage(ChatUtils.centerAlign(ChatUtils.format(line, ColorScheme.NORMAL)));
+		
+		status.addAll(GameMaster.activeGame.getStatus(context));
+
 		if(GameMaster.activeGame instanceof TimerModule){
 			long millis = ((TimerModule) GameMaster.activeGame).getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
 			int seconds = Math.round(millis / 1000F);
 			int mins = seconds / 60;
-			sender.sendMessage(ChatUtils.centerAlign(ChatUtils.format("[[" + mins + "]] minutes and [[" + seconds % 60 + "]] seconds remain", ColorScheme.NORMAL)));
+			status.add(new Message(Scheme.NORMAL).then(mins).alternate().then(" minutes and ").then(seconds%60).alternate().then(" seconds remain").toString());
 		}
-		sender.sendMessage(ChatUtils.spacerLine());
+		
+		return Align.box(status, "");
 	}
 	
 	@CommandHandler(cmd = "vote")
-	public void voteCmd(CommandSender sender, String[] args){
+	public Object voteCmd(CommandSender sender, String[] args){
 		switch(GameMaster.status){
 			case INTERMISSION:
-				if(GameMaster.games.size() < 2){
-					sender.sendMessage(ChatUtils.format("There aren't any games to vote for", ColorScheme.ERROR));
-					return;
-				}
+				if(GameMaster.games.size() < 2)
+					return new Message(Scheme.ERROR).then("There aren't any games to vote for");
 				AutoGame game = args.length > 0 ? GameMaster.getRegisteredGame(args[0]) : null;
 				if(game == null){
-					sender.sendMessage(ChatUtils.format("Choose a valid game to vote for", ColorScheme.ERROR));
-					sender.sendMessage(ChatUtils.format("Available games: [[" + GameMaster.games + "]]", ColorScheme.NORMAL));
-					return;
+					JsonMessage list = new JsonMessage(Scheme.NORMAL).then("Click to vote for a game -> ");
+					boolean first = true;
+					for(AutoGame each : GameMaster.games){
+						if(!first)
+							list.then(", ");
+						list.then(each).strong().tooltip("Click to vote for " + each).command("/vote " + each);
+						first = false;
+					}
+					return list;
 				}
-				if(game.equals(GameMaster.lastGame)){
-					sender.sendMessage(ChatUtils.format("You can't vote for the game that just ran", ColorScheme.ERROR));
-					return;
-				}
+				if(game.equals(GameMaster.lastGame))
+					return new Message(Scheme.ERROR).then(game).strong().then(" has played recently, choose a different game");
 				GameMaster.votes.put(sender, game.getGameName());
-				sender.sendMessage(ChatUtils.format("You voted for [[" + game + "]] for the next event", ColorScheme.NORMAL));
-				break;
+				return new Message(Scheme.NORMAL).then("You voted for ").then(game).strong().then(" for the next game");
 			case PREP:
 				GameMap map = args.length > 0 ? GameMaster.getRegisteredMap(args[0]) : null;
 				if(map == null){
-					sender.sendMessage(ChatUtils.format("Choose a valid map to vote for", ColorScheme.ERROR));
-					sender.sendMessage(ChatUtils.format("Available maps: [[" + GameMaster.getCompatibleMaps(GameMaster.activeGame) + "]]", ColorScheme.NORMAL));
-					return;
+					JsonMessage list = new JsonMessage(Scheme.NORMAL).then("Click to vote for a game -> ");
+					boolean first = true;
+					for(GameMap each : GameMaster.getCompatibleMaps(GameMaster.activeGame)){
+						if(!first)
+							list.then(", ");
+						list.then(each).strong().tooltip("Click to vote for " + each).command("/vote " + each);
+						first = false;
+					}
+					return list;
 				}
-				if(!GameMaster.activeGame.isCompatible(map)){
-					sender.sendMessage(ChatUtils.format("That map isn't compatible with the scheduled game", ColorScheme.ERROR));
-					return;
-				}
-				if(GameMaster.mapHistory.contains(map)){
-					sender.sendMessage(ChatUtils.format("That map has already played recently, choose another", ColorScheme.ERROR));
-					return;
-				}
+				if(!GameMaster.activeGame.isCompatible(map))
+					return new Message(Scheme.ERROR).then(GameMaster.activeGame).strong().then(" can't be played on ").then(map).strong();
+				if(GameMaster.mapHistory.contains(map))
+					return new Message(Scheme.ERROR).then(map).strong().then(" has played recently, choose a different game");
 				GameMaster.votes.put(sender, map.name);
-				sender.sendMessage(ChatUtils.format("You voted for [["  + map + "]] for the next map", ColorScheme.NORMAL));
-				break;
+				return new Message(Scheme.NORMAL).then("You voted for ").then(map).strong().then(" for the next map");
 			case RUNNING:
 			case SUSPENDED:
-				sender.sendMessage(ChatUtils.format("You can only vote on games or maps during the intermission", ColorScheme.ERROR));
-				return;	
+				return new Message(Scheme.ERROR).then("You can only vote on games and maps during the intermission");
 		}
-		return;
+		return null;
 	}
 	
 	private Kit getChargedKit(Kit normal){

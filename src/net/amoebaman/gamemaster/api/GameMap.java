@@ -27,8 +27,6 @@ public class GameMap {
 		 * Add basic values that must always be present
 		 */
 		properties.set("world", Bukkit.getWorlds().get(0).getName());
-		properties.set("time", "RANDOM");
-		properties.set("weather", "RANDOM");
 	}
 	
 	public String toString(){ return name; }

@@ -21,11 +21,11 @@ import net.amoebaman.gamemaster.enums.PlayerStatus;
 import net.amoebaman.gamemaster.modules.MessagerModule;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
 import net.amoebaman.utils.CommandController;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.S_Loc;
+import net.amoebaman.utils.chat.Align;
+import net.amoebaman.utils.chat.Chat;
 import net.amoebaman.utils.maps.PlayerMap;
 
 import org.bukkit.Bukkit;
@@ -170,6 +170,9 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	public void onDisable(){
+		if(status.active)
+			activeGame.abort();
+		GameFlow.startIntermission();
 		/*
 		 * Save up configurations
 		 */
@@ -302,12 +305,8 @@ public class GameMaster extends JavaPlugin{
 					break;
 				case PLAYING:
 					activeGame.addPlayer(player);
-					if(activeGame instanceof MessagerModule){
-						player.sendMessage(ChatUtils.spacerLine());
-						for(String line : ((MessagerModule) activeGame).getSpawnMessage(player))
-							player.sendMessage(ChatUtils.centerAlign(ChatUtils.format(line, ColorScheme.HIGHLIGHT)));
-						player.sendMessage(ChatUtils.spacerLine());
-					}
+					if(activeGame instanceof MessagerModule)
+						Chat.send(player, Align.box(((MessagerModule) activeGame).getSpawnMessage(player), "+"));
 					break;
 			}
 		}

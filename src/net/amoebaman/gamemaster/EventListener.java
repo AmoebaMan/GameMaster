@@ -10,9 +10,12 @@ import net.amoebaman.kitmaster.enums.GiveKitContext;
 import net.amoebaman.kitmaster.utilities.ClearKitsEvent;
 import net.amoebaman.kitmaster.utilities.GiveKitEvent;
 import net.amoebaman.statmaster.StatMaster;
-import net.amoebaman.utils.ChatUtils;
-import net.amoebaman.utils.ChatUtils.ColorScheme;
 import net.amoebaman.utils.GenUtil;
+import net.amoebaman.utils.chat.Align;
+import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.utils.chat.JsonMessage;
+import net.amoebaman.utils.chat.Message;
 import net.amoebaman.utils.maps.PlayerMap;
 import net.amoebaman.utils.nms.StatusBar;
 import net.minecraft.util.com.google.common.collect.Lists;
@@ -122,11 +125,11 @@ public class EventListener implements Listener {
 				SafeSpawnModule game = (SafeSpawnModule) GameMaster.activeGame;
 				if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
 					event.setCancelled(true);
-					damager.sendMessage(ChatUtils.format("You can't damage enemies that are in their spawn", ColorScheme.ERROR));
+					Chat.send(damager, new Message(Scheme.WARNING).then("You can't damage enemies in their spawn"));
 				}
 				if(damager.getLocation().distance(game.getSafeLoc(damager)) < game.getSpawnRadius(damager) && victim.getLocation().distance(game.getSafeLoc(damager)) > game.getSpawnRadius(damager)){
 					event.setCancelled(true);
-					damager.sendMessage(ChatUtils.format("You can't attack enemies from the safety of your spawn", ColorScheme.ERROR));
+					Chat.send(damager, new Message(Scheme.WARNING).then("You can't attack enemies from your spawn"));
 				}
 			}
 			/*
@@ -162,11 +165,16 @@ public class EventListener implements Listener {
 		Bukkit.getScheduler().scheduleSyncDelayedTask(GameMaster.plugin(), new Runnable(){ public void run(){
 			switch(GameMaster.status){
 				case PREP:
-					player.sendMessage(ChatUtils.format("The server is currently preparing to launch [[" + GameMaster.activeGame.getGameName() + "]]", ColorScheme.HIGHLIGHT));
-					player.sendMessage(ChatUtils.format("Type [['/help games']] for more info", ColorScheme.HIGHLIGHT));
+					Chat.send(player,
+						new Message(Scheme.HIGHLIGHT).then("We're getting ready to play ").then(GameMaster.activeGame).strong(),
+						new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next map")
+					);
 					break;
 				case INTERMISSION:
-					player.sendMessage(ChatUtils.format("The server is waiting to begin the next event", ColorScheme.HIGHLIGHT));
+					Chat.send(player,
+						new Message(Scheme.HIGHLIGHT).then("We're voting on the next game"),
+						new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next game")
+					);
 				default: }
 		} }, 20);
 		/*
@@ -245,10 +253,7 @@ public class EventListener implements Listener {
 						 * If the game also happens to be MessagerCompatible, send messages as well
 						 */
 						if(game instanceof MessagerModule){
-							player.sendMessage(ChatUtils.spacerLine());
-							for(String line : ((MessagerModule) game).getSpawnMessage(player))
-								player.sendMessage(ChatUtils.centerAlign(ChatUtils.format(line, ColorScheme.HIGHLIGHT)));
-							player.sendMessage(ChatUtils.spacerLine());
+							Chat.send(player, Align.box(((MessagerModule) game).getSpawnMessage(player), ""));
 						}
 						GameMaster.respawning.remove(player);
 					}
@@ -315,7 +320,7 @@ public class EventListener implements Listener {
 		if(player.hasPlayedBefore() || player.isOnline()){
 			StatMaster.getHandler().incrementStat(player, "charges");
 			StatMaster.getHandler().incrementCommunityStat("votes");
-			Bukkit.broadcastMessage(ChatUtils.format("[[" + player.getName() + "]] voted for the server, and now has [[" + StatMaster.getHandler().getStat(player, "charges") + "]] charges", ColorScheme.HIGHLIGHT));
+			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then(player.getName()).strong().then(" voted for the server, and now has ").then(StatMaster.getHandler().getStat(player, "charges")).strong().then(" charges"));
 		}
 	}
 	
@@ -325,7 +330,7 @@ public class EventListener implements Listener {
 		if(GameMaster.getStatus(player) == PlayerStatus.PLAYING && GameMaster.status == MasterStatus.RUNNING)
 			if(GameMaster.activeGame instanceof RespawnModule && player.getLocation().distance(((RespawnModule) GameMaster.activeGame).getRespawnLoc(player)) > 10)
 				if(!event.getContext().overrides && event.getContext() != GiveKitContext.SIGN_TAKEN && !player.hasPermission("gamemaster.globalkit")){
-					player.sendMessage(ChatUtils.format("You must be within [[10 blocks]] of your spawn to choose a kit.", ColorScheme.ERROR));
+					Chat.send(player, new Message(Scheme.WARNING).then("You must be in your spawn to take kits via command"));
 					event.setCancelled(true);
 					return;
 				}
@@ -360,11 +365,11 @@ public class EventListener implements Listener {
 					if(game.getTeam(thrower) != game.getTeam(victim)){
 						if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
 							event.setIntensity(victim, 0);
-							thrower.sendMessage(ChatUtils.format("You can't damage enemies that are in their spawn", ColorScheme.ERROR));
+							Chat.send(thrower, new Message(Scheme.WARNING).then("You can't attack enemies in their spawn"));
 						}
 						if(thrower.getLocation().distance(game.getSafeLoc(thrower)) < game.getSpawnRadius(thrower) && victim.getLocation().distance(game.getSafeLoc(thrower)) >= game.getSpawnRadius(thrower)){
 							event.setIntensity(victim, 0);
-							thrower.sendMessage(ChatUtils.format("You can't damage enemies out of your spawn", ColorScheme.ERROR));
+							Chat.send(thrower, new Message(Scheme.WARNING).then("You can't attack enemies from your spawn"));
 						}
 					}
 					else if(game.getTeam(thrower) == game.getTeam(victim))
@@ -384,14 +389,14 @@ public class EventListener implements Listener {
 	public void updateServerList(ServerListPingEvent event){
 		switch(GameMaster.status){
 			case INTERMISSION:
-				event.setMotd(ChatUtils.format("Voting on the next game", ColorScheme.HIGHLIGHT));
+				event.setMotd(new Message(Scheme.HIGHLIGHT).then("Voting on the next game").toString());
 				break;
 			case PREP:
-				event.setMotd(ChatUtils.format("Voting on a map for [[" + GameMaster.activeGame + "]]", ColorScheme.HIGHLIGHT));
+				event.setMotd(new Message(Scheme.HIGHLIGHT).then("Voting on a map for ").then(GameMaster.activeGame).strong().toString());
 				break;
 			case RUNNING:
 			case SUSPENDED:
-				event.setMotd(ChatUtils.format("Playing [[" + GameMaster.activeGame + "]] on [[" + GameMaster.activeMap + "]]", ColorScheme.HIGHLIGHT));
+				event.setMotd(new Message(Scheme.HIGHLIGHT).then("Playing ").then(GameMaster.activeGame).strong().then(" on ").then(GameMaster.activeMap).strong().toString());
 				break;
 		}
 	}
