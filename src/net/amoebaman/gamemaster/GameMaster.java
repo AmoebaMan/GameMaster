@@ -170,9 +170,6 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	public void onDisable(){
-		if(status.active)
-			activeGame.abort();
-		GameFlow.startIntermission();
 		/*
 		 * Save up configurations
 		 */

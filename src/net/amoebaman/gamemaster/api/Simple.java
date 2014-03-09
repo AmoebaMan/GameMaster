@@ -13,7 +13,6 @@ import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.Align;
 import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.CustomChar;
 import net.amoebaman.utils.chat.Scheme;
 import net.amoebaman.utils.chat.JsonMessage;
 import net.amoebaman.utils.chat.Message;
@@ -140,7 +139,7 @@ public class Simple {
 	public static List<String> getStatus(TeamAutoGame game){
 		List<String> message = new ArrayList<String>();
 		for(Team team : game.getActiveTeams(GameMaster.activeMap))
-			message.add(new Message(Scheme.NORMAL).then("The ").then(team).color(team.chat).then(" team has ").then(game.getScore(team)).alternate().then(" points").toString());
+			message.add(new Message(Scheme.NORMAL).then("The ").then(team).color(team.chat).then(" team has ").then(game.getScore(team)).strong().then(" points").toString());
 		return message;
 	}	
 	
@@ -195,7 +194,7 @@ public class Simple {
 		Chat.broadcast(Align.box(Lists.newArrayList(
 				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame.getGameName().toUpperCase()).strong().then(" is starting").toString(),
 				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeMap).strong().then(" will be the battlefield").toString()
-		), Scheme.HIGHLIGHT.normal.getColor() + "I"));
+		), Scheme.HIGHLIGHT.normal.color() + "I"));
 		
 		List<Player> players = Utils.sort(GameMaster.getPlayers());
 		List<Set<Player>> split = Utils.split(players, activeTeams.size());
@@ -267,7 +266,7 @@ public class Simple {
 				winner == Team.NEUTRAL
 					? new Message(Scheme.HIGHLIGHT).then("The match ended in a draw").toString()
 					: new Message(Scheme.HIGHLIGHT).then("The ").then(winner).color(winner.chat).then(" team won the game").toString()
-		), Scheme.HIGHLIGHT.normal.getColor() + "I"));
+		), Scheme.HIGHLIGHT.normal.color() + "I"));
 
 		Bukkit.getScheduler().scheduleSyncDelayedTask(game, new Runnable(){ public void run(){
 			GameFlow.startIntermission();

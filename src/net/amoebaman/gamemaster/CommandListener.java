@@ -19,10 +19,7 @@ import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.ChatUtils;
 import net.amoebaman.utils.ChatUtils.ColorScheme;
 import net.amoebaman.utils.CommandController.CommandHandler;
-import net.amoebaman.utils.chat.Align;
-import net.amoebaman.utils.chat.JsonMessage;
-import net.amoebaman.utils.chat.Message;
-import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.utils.chat.*;
 import net.minecraft.util.com.google.common.collect.Lists;
 
 import org.bukkit.Bukkit;
@@ -58,7 +55,7 @@ public class CommandListener {
 			long millis = ((TimerModule) GameMaster.activeGame).getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
 			int seconds = Math.round(millis / 1000F);
 			int mins = seconds / 60;
-			status.add(new Message(Scheme.NORMAL).then(mins).alternate().then(" minutes and ").then(seconds%60).alternate().then(" seconds remain").toString());
+			status.add(new Message(Scheme.NORMAL).then(mins).strong().then(" minutes and ").then(seconds%60).strong().then(" seconds remain").toString());
 		}
 		
 		return Align.box(status, "");
@@ -72,14 +69,9 @@ public class CommandListener {
 					return new Message(Scheme.ERROR).then("There aren't any games to vote for");
 				AutoGame game = args.length > 0 ? GameMaster.getRegisteredGame(args[0]) : null;
 				if(game == null){
-					JsonMessage list = new JsonMessage(Scheme.NORMAL).then("Click to vote for a game -> ");
-					boolean first = true;
-					for(AutoGame each : GameMaster.games){
-						if(!first)
-							list.then(", ");
-						list.then(each).strong().tooltip("Click to vote for " + each).command("/vote " + each);
-						first = false;
-					}
+					List<JsonMessage> list = Lists.newArrayList(new JsonMessage(Scheme.NORMAL).then("Click to vote for a game:"));
+					for(AutoGame each : GameMaster.games)
+						list.add(new JsonMessage(Scheme.NORMAL).then("  > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
 					return list;
 				}
 				if(game.equals(GameMaster.lastGame))
@@ -89,14 +81,9 @@ public class CommandListener {
 			case PREP:
 				GameMap map = args.length > 0 ? GameMaster.getRegisteredMap(args[0]) : null;
 				if(map == null){
-					JsonMessage list = new JsonMessage(Scheme.NORMAL).then("Click to vote for a game -> ");
-					boolean first = true;
-					for(GameMap each : GameMaster.getCompatibleMaps(GameMaster.activeGame)){
-						if(!first)
-							list.then(", ");
-						list.then(each).strong().tooltip("Click to vote for " + each).command("/vote " + each);
-						first = false;
-					}
+					List<JsonMessage> list = Lists.newArrayList(new JsonMessage(Scheme.NORMAL).then("Click to vote for a map:"));
+					for(GameMap each : GameMaster.getCompatibleMaps(GameMaster.activeGame))
+						list.add(new JsonMessage(Scheme.NORMAL).then("  > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
 					return list;
 				}
 				if(!GameMaster.activeGame.isCompatible(map))

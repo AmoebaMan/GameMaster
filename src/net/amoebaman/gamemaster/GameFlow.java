@@ -96,7 +96,7 @@ public class GameFlow {
 		 */
 		if(GameMaster.votes.isEmpty()){
 			GameMaster.activeGame = GenUtil.getRandomElement(GameMaster.games);
-			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("No votes were cast").alternate().then(" - randomly choosing a game"));
+			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("No votes were cast - randomly choosing a game"));
 		}
 		/*
 		 * Otherwise...
@@ -154,7 +154,7 @@ public class GameFlow {
 		 */
 		if(GameMaster.votes.isEmpty()){
 			GameMaster.activeMap = GenUtil.getRandomElement(GameMaster.getCompatibleMaps(GameMaster.activeGame));
-			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("No votes were cast").alternate().then(" - randomly choosing a map"));
+			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("No votes were cast - randomly choosing a map"));
 		}
 		/*
 		 * Otherwise...
