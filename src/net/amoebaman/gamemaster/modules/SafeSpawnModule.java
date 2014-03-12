@@ -21,7 +21,7 @@ public interface SafeSpawnModule{
 	 * @param player the player in question
 	 * @return the spawn radius
 	 */
-	public int getSpawnRadius(Player player);
+	public int getSafeRadius(Player player);
 	
 	/**
 	 * Gets the re-entry timeout for the safe location.  Players attempting to
@@ -32,7 +32,7 @@ public interface SafeSpawnModule{
 	 * @param player the player in question
 	 * @return the spawn re-entry timeout in seconds
 	 */
-	public int getSpawnReentryDelaySeconds(Player player);
+	public int getSafeReentryTimeout(Player player);
 	
 	/**
 	 * Gets the safe location, typically the spawn point.  Unless you've got a

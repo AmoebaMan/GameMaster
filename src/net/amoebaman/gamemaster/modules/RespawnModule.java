@@ -21,7 +21,7 @@ public interface RespawnModule{
 	 * @param player the player respawning
 	 * @return the respawn delay in seconds
 	 */
-	public int getRespawnSeconds(Player player);
+	public int getRespawnDelay(Player player);
 	
 	/**
 	 * Gets the location at which the player must wait out the respawn delay.
@@ -52,6 +52,6 @@ public interface RespawnModule{
 	 * @param player the player respawning
 	 * @return the invulnerability time
 	 */
-	public int getRespawnInvulnSeconds(Player player);
+	public int getRespawnInvuln(Player player);
 	
 }

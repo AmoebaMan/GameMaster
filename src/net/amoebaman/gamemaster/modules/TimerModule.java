@@ -15,7 +15,7 @@ public interface TimerModule{
 	 * 
 	 * @return the length of the game in minutes
 	 */
-	public int getGameLengthMinutes();
+	public int getGameLength();
 	
 	/**
 	 * Ends the game once time has elapsed. This method should handle any and
