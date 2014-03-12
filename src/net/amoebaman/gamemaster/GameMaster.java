@@ -26,6 +26,8 @@ import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.S_Loc;
 import net.amoebaman.utils.chat.Align;
 import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.CustomChar;
+import net.amoebaman.utils.chat.Scheme;
 import net.amoebaman.utils.maps.PlayerMap;
 
 import org.bukkit.Bukkit;
@@ -303,7 +305,7 @@ public class GameMaster extends JavaPlugin{
 				case PLAYING:
 					activeGame.addPlayer(player);
 					if(activeGame instanceof MessagerModule)
-						Chat.send(player, Align.box(((MessagerModule) activeGame).getSpawnMessage(player), "+"));
+						Chat.send(player, Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(((MessagerModule) activeGame).getRespawnMessage(player))));
 					break;
 			}
 		}

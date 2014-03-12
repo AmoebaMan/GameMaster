@@ -52,13 +52,13 @@ public class CommandListener {
 		status.addAll(GameMaster.activeGame.getStatus(context));
 
 		if(GameMaster.activeGame instanceof TimerModule){
-			long millis = ((TimerModule) GameMaster.activeGame).getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
+			long millis = ((TimerModule) GameMaster.activeGame).getGameLength() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
 			int seconds = Math.round(millis / 1000F);
 			int mins = seconds / 60;
 			status.add(new Message(Scheme.NORMAL).then(mins).strong().then(" minutes and ").then(seconds%60).strong().then(" seconds remain").toString());
 		}
 		
-		return Align.box(status, "");
+		return Align.addSpacers("", Align.center(status));
 	}
 	
 	@CommandHandler(cmd = "vote")

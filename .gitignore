@@ -49,6 +49,8 @@ xcuserdata/
 .classpath
 .project
 .settings
+/target
+/bin
 
 # IntelliJ #
 ############
