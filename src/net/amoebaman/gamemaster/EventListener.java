@@ -123,11 +123,11 @@ public class EventListener implements Listener {
 			 */
 			if(GameMaster.activeGame instanceof SafeSpawnModule){
 				SafeSpawnModule game = (SafeSpawnModule) GameMaster.activeGame;
-				if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
+				if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSafeRadius(victim)){
 					event.setCancelled(true);
 					Chat.send(damager, new Message(Scheme.WARNING).then("You can't damage enemies in their spawn"));
 				}
-				if(damager.getLocation().distance(game.getSafeLoc(damager)) < game.getSpawnRadius(damager) && victim.getLocation().distance(game.getSafeLoc(damager)) > game.getSpawnRadius(damager)){
+				if(damager.getLocation().distance(game.getSafeLoc(damager)) < game.getSafeRadius(damager) && victim.getLocation().distance(game.getSafeLoc(damager)) > game.getSafeRadius(damager)){
 					event.setCancelled(true);
 					Chat.send(damager, new Message(Scheme.WARNING).then("You can't attack enemies from your spawn"));
 				}
@@ -248,16 +248,16 @@ public class EventListener implements Listener {
 					 */
 					if(GameMaster.status.active && GameMaster.getStatus(player) == PlayerStatus.PLAYING && player.isOnline()){
 						player.teleport(game.getRespawnLoc(player));
-						player.setNoDamageTicks(20 * game.getRespawnInvulnSeconds(player));
+						player.setNoDamageTicks(20 * game.getRespawnInvuln(player));
 						/*
 						 * If the game also happens to be MessagerCompatible, send messages as well
 						 */
 						if(game instanceof MessagerModule){
-							Chat.send(player, Align.box(((MessagerModule) game).getSpawnMessage(player), ""));
+							Chat.send(player, Align.addSpacers("", Align.center(((MessagerModule) game).getRespawnMessage(player))));
 						}
 						GameMaster.respawning.remove(player);
 					}
-				}}, 20 * game.getRespawnSeconds(player));
+				}}, 20 * game.getRespawnDelay(player));
 				return;
 			}
 		}
@@ -363,11 +363,11 @@ public class EventListener implements Listener {
 				if(GameMaster.activeGame instanceof TeamAutoGame){
 					TeamAutoGame game = (TeamAutoGame) GameMaster.activeGame;
 					if(game.getTeam(thrower) != game.getTeam(victim)){
-						if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
+						if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSafeRadius(victim)){
 							event.setIntensity(victim, 0);
 							Chat.send(thrower, new Message(Scheme.WARNING).then("You can't attack enemies in their spawn"));
 						}
-						if(thrower.getLocation().distance(game.getSafeLoc(thrower)) < game.getSpawnRadius(thrower) && victim.getLocation().distance(game.getSafeLoc(thrower)) >= game.getSpawnRadius(thrower)){
+						if(thrower.getLocation().distance(game.getSafeLoc(thrower)) < game.getSafeRadius(thrower) && victim.getLocation().distance(game.getSafeLoc(thrower)) >= game.getSafeRadius(thrower)){
 							event.setIntensity(victim, 0);
 							Chat.send(thrower, new Message(Scheme.WARNING).then("You can't attack enemies from your spawn"));
 						}

@@ -67,11 +67,11 @@ public class RecurringOps implements Runnable {
 						GameMaster.activeGame.removePlayer(player);
 						GameMaster.activeGame.addPlayer(player);
 					}
-					if(player.getLocation().distance(game.getSafeLoc(player)) < game.getSpawnRadius(player)){
-						if(System.currentTimeMillis() - GameMaster.lastDamage.get(player) < 1000 * game.getSpawnReentryDelaySeconds(player)){
+					if(player.getLocation().distance(game.getSafeLoc(player)) < game.getSafeRadius(player)){
+						if(System.currentTimeMillis() - GameMaster.lastDamage.get(player) < 1000 * game.getSafeReentryTimeout(player)){
 							player.damage(1);
 							player.setVelocity(player.getLocation().clone().toVector().subtract(game.getSafeLoc(player).clone().toVector()).multiply(0.25));
-							player.sendMessage(ChatColor.RED + "You can't re-enter spawn for " + (game.getSpawnReentryDelaySeconds(player) - ((System.currentTimeMillis() - GameMaster.lastDamage.get(player)) / 1000) ) + " more seconds");
+							player.sendMessage(ChatColor.RED + "You can't re-enter spawn for " + (game.getSafeReentryTimeout(player) - ((System.currentTimeMillis() - GameMaster.lastDamage.get(player)) / 1000) ) + " more seconds");
 						}
 						else
 							player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 35, 6), true);
@@ -84,11 +84,11 @@ public class RecurringOps implements Runnable {
 			if(GameMaster.activeGame instanceof TimerModule){
 				TimerModule game = (TimerModule) GameMaster.activeGame;
 				
-				long millis = game.getGameLengthMinutes() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
+				long millis = game.getGameLength() * 60 * 1000 - (System.currentTimeMillis() - GameMaster.gameStart);
 				int seconds = Math.round(millis / 1000F);
 				int mins = seconds / 60;
 				String status = new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame).strong().then(" on ").then(GameMaster.activeMap).strong().then(" - ").then(mins + ":" + (seconds % 60 < 10 ? "0" + (seconds % 60) : seconds % 60)).strong().toString();
-				StatusBar.setAllStatusBars(status, 1.0f * seconds / (game.getGameLengthMinutes() * 60), 1);
+				StatusBar.setAllStatusBars(status, 1.0f * seconds / (game.getGameLength() * 60), 1);
 				
 				if(millis <= 1000)
 					game.end();
@@ -104,6 +104,7 @@ public class RecurringOps implements Runnable {
 		else{
 			StatusBar.removeAllStatusBars();
 		}
+		
 		/*
 		 * Update player names
 		 */

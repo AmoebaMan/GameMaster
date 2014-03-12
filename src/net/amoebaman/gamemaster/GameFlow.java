@@ -210,9 +210,9 @@ public class GameFlow {
 					messages.add(new Message(Scheme.HIGHLIGHT).then("You are on the ").then(team).color(team.chat).then(" team").toString());
 				}
 				if(GameMaster.activeGame instanceof MessagerModule)
-					messages.addAll( ((MessagerModule) GameMaster.activeGame).getWelcomeMessage(player));
+					messages.addAll( ((MessagerModule) GameMaster.activeGame).getJoinMessage(player));
 
-				Chat.send(player, Align.box(messages, ""));
+				Chat.send(player, Align.addSpacers("", Align.center(messages)));
 			}
 		} }, 40);
 	}
