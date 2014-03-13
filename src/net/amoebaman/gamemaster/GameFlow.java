@@ -39,7 +39,6 @@ public class GameFlow {
 		/*
 		 * Reset the world's status
 		 */
-		GameMaster.worldTimeLock = 6000;
 		GameMaster.mainLobby.getWorld().setStorm(false);
 		GameMaster.mainLobby.getWorld().setThundering(false);
 		/*
