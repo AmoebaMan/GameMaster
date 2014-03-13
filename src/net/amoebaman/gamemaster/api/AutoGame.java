@@ -86,7 +86,7 @@ public abstract class AutoGame extends JavaPlugin{
 	 * @param player the player this information will be sent to
 	 * @return the status of the game
 	 */
-	public abstract List<Object> getStatus(Player player);
+	public abstract List<?> getStatus(Player player);
 	
 	/**
 	 * Safely adds a player to the game, such as when they log in, or use the
