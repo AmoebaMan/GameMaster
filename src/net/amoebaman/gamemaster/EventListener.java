@@ -1,5 +1,6 @@
 package net.amoebaman.gamemaster;
 
+import net.amoebaman.gamemaster.api.AutoGame;
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
@@ -48,6 +49,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -57,6 +59,11 @@ import com.vexsoftware.votifier.model.VotifierEvent;
 
 @SuppressWarnings("deprecation")
 public class EventListener implements Listener {
+	
+	public void deregisterUnloadedGame(PluginDisableEvent event){
+		if(event.getPlugin() instanceof AutoGame)
+			GameMaster.deregisterGame((AutoGame) event.getPlugin());
+	}
 	
 	@EventHandler
 	public void blockPlace(BlockPlaceEvent event){
