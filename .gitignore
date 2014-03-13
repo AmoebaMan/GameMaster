@@ -49,8 +49,7 @@ xcuserdata/
 .classpath
 .project
 .settings
-/target
-/bin
+.fatjar
 
 # IntelliJ #
 ############

@@ -105,7 +105,7 @@ public class GameMaster extends JavaPlugin{
 	/** The time when the current game started */
 	public static long gameStart;
 	
-	protected static boolean debugCycle;
+	public static boolean debugCycle;
 	protected static int recurringOpsTaskID;
 	protected static String mainDir;
 	protected static File configFile, mapsFile, repairFile;
