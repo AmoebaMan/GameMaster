@@ -41,8 +41,9 @@ public class CommandListener {
 		
 		Player context = sender instanceof Player? (Player) sender : null;
 		
-		List<String> status = Lists.newArrayList(
-				new Message(Scheme.HIGHLIGHT).then("Currently playing ").then(GameMaster.activeGame).strong().then(" on ").then(GameMaster.activeMap).strong().toString()   );
+		List<Object> status = Lists.newArrayList(
+				(Object) new Message(Scheme.HIGHLIGHT).then("Currently playing ").then(GameMaster.activeGame).strong().then(" on ").then(GameMaster.activeMap).strong()
+		);
 		
 		if(GameMaster.activeGame instanceof TeamAutoGame && context != null && GameMaster.getStatus(context) == PlayerStatus.PLAYING){
 			Team team = ((TeamAutoGame) GameMaster.activeGame).getTeam(context);

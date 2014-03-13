@@ -20,7 +20,7 @@ public interface MessagerModule{
 	 * @param inContext the player who will receive the message
 	 * @return messages to send
 	 */
-	public List<String> getJoinMessage(Player inContext);
+	public List<Object> getJoinMessage(Player inContext);
 	
 	/**
 	 * Gets a message that will automatically be sent to players when they
@@ -30,6 +30,6 @@ public interface MessagerModule{
 	 * @param inContext the player who will receive the message
 	 * @return messages to send
 	 */
-	public List<String> getRespawnMessage(Player inContext);
+	public List<Object> getRespawnMessage(Player inContext);
 	
 }

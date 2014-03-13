@@ -203,10 +203,10 @@ public class GameFlow {
 			 */
 			for(Player player : GameMaster.getPlayers()){
 				
-				List<String> messages = new ArrayList<String>();
+				List<Object> messages = new ArrayList<Object>();
 				if(GameMaster.activeGame instanceof TeamAutoGame){
 					Team team = ((TeamAutoGame) GameMaster.activeGame).getTeam(player);
-					messages.add(new Message(Scheme.HIGHLIGHT).then("You are on the ").then(team).color(team.chat).then(" team").toString());
+					messages.add(new Message(Scheme.HIGHLIGHT).then("You are on the ").then(team).color(team.chat).then(" team"));
 				}
 				if(GameMaster.activeGame instanceof MessagerModule)
 					messages.addAll( ((MessagerModule) GameMaster.activeGame).getJoinMessage(player));
