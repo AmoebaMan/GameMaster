@@ -76,7 +76,7 @@ public class Simple{
 		for(Team team : game.getActiveTeams(GameMaster.activeMap)){
 			if(GameMaster.debugCycle)
 				GameMaster.logger().info(team + "'s size is " + game.getSize(team) + ", ideal is " + game.getProperSize(team));
-			if(game.getSize(team) > game.getProperSize(team) + 1){
+			if(game.getSize(team) >= game.getProperSize(team) + 1){
 				Team mostNeedy = null;
 				double leastPlayers = game.getSize(team);
 				for(Team other : game.getActiveTeams(GameMaster.activeMap))
