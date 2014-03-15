@@ -48,9 +48,6 @@ import org.bukkit.scoreboard.Scoreboard;
 /**
  * 
  * The main functioning class of GameMaster that stores and manages most important information.
- * This is a complete rewrite of the code based on a better-functioning and more flexible system for maps that was devised later.
- * The potential sloppiness of surgically inserting the new map system made a full refactoring seem more appealing to me.
- * For the old code, see <code>com.amoebaman.gamemaster.GameMaster.java</code>
  * 
  * @author Dennison Richter
  *

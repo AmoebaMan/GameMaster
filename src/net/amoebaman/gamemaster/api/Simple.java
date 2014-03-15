@@ -4,6 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.bukkit.*;
+import org.bukkit.FireworkEffect.Type;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
+
 import net.amoebaman.gamemaster.GameFlow;
 import net.amoebaman.gamemaster.GameMaster;
 import net.amoebaman.gamemaster.enums.MasterStatus;
@@ -12,19 +20,6 @@ import net.amoebaman.gamemaster.utils.Utils;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.*;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Color;
-import org.bukkit.FireworkEffect;
-import org.bukkit.FireworkEffect.Type;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Firework;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.FireworkMeta;
 
 public class Simple{
 	
@@ -238,7 +233,7 @@ public class Simple{
 			if(game.getTeam(player) == winner){
 				StatMaster.getHandler().incrementStat(player, "wins");
 				StatMaster.getHandler().adjustStat(player, "charges", 0.5);
-				Chat.send(player, new JsonMessage(Scheme.HIGHLIGHT).then("You have received ").then("0.5 charges").strong().tooltip(Scheme.HIGHLIGHT.normal + "You have " + StatMaster.getHandler().getStat(player, "charges") + " charges total").then(" for winning the game"));
+				Chat.send(player, new Message(Scheme.HIGHLIGHT).then("You have received ").then("0.5 charges").strong().tooltip(Chat.format("Total of &z" + StatMaster.getHandler().getStat(player, "charges"), Scheme.NORMAL)).then(" for winning the game"));
 			}
 			else
 				StatMaster.getHandler().incrementStat(player, "losses");

@@ -3,6 +3,12 @@ package net.amoebaman.gamemaster;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Scoreboard;
+
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.Team;
@@ -12,15 +18,8 @@ import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.Align;
 import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.Scheme;
-import net.amoebaman.utils.chat.JsonMessage;
 import net.amoebaman.utils.chat.Message;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Scoreboard;
+import net.amoebaman.utils.chat.Scheme;
 
 public class GameFlow {
 	
@@ -80,7 +79,7 @@ public class GameFlow {
 		 */
 		Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("The next game will start in ").then("one minute").strong());
 		if(GameMaster.games.size() > 1)
-			Chat.broadcast(new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote for the next game"));
+			Chat.broadcast(new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote for the next game"));
 		/*
 		 * Schedule the next phase
 		 */
@@ -137,7 +136,7 @@ public class GameFlow {
 		Chat.broadcast(
 				new Message(Scheme.HIGHLIGHT).then("The next game will be ").then(GameMaster.activeGame).strong().toString(),
 				new Message(Scheme.HIGHLIGHT).then("The game will start in ").then("30 seconds").strong().toString(),
-				new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote for the next map")
+				new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote for the next map")
 		);
 		/*
 		 * Schedule the next phase
