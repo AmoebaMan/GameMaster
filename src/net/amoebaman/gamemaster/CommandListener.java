@@ -177,9 +177,9 @@ public class CommandListener {
 	
 	@CommandHandler(cmd = "charges info")
 	public Object chargesInfoCmd(Player sender, String[] args){
-		if(args.length < 2)
+		if(args.length < 1)
 			return new Message(Scheme.ERROR).then("Name a kit to get info about its charged state");
-		Kit charged = getChargedKit(KitHandler.getKit(args[1]));
+		Kit charged = getChargedKit(KitHandler.getKit(args[0]));
 		if(charged == null)
 			return new Message(Scheme.ERROR).then("That kit doesn't have an upgraded state available");
 		new Message(Scheme.NORMAL)
@@ -195,15 +195,6 @@ public class CommandListener {
 		new Message(Scheme.NORMAL).then("Effects:").send(sender);
 		for(PotionEffect effect : charged.effects)
 			new Message(Scheme.NORMAL).then(" - " + ItemController.friendlyEffectString(effect)).send(sender);
-		new Message(Scheme.NORMAL).then("Permissions:").send(sender);
-		for(String perm : charged.permissions)
-			new Message(Scheme.NORMAL).then(" - " + perm).send(sender);
-		for(Attribute attribute : charged.attributes.keySet())
-			new Message(Scheme.NORMAL)
-				.then(attribute)
-				.then(":")
-				.then(charged.getAttribute(attribute)).strong()
-				.send(sender);
 		return null;
 	}
 	
