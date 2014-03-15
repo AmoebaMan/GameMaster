@@ -1,5 +1,28 @@
 package net.amoebaman.gamemaster;
 
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
+import org.bukkit.entity.*;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.*;
+import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.*;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+
+import com.vexsoftware.votifier.model.Vote;
+import com.vexsoftware.votifier.model.VotifierEvent;
+
+import net.amoebaman.gamemaster.api.AutoGame;
 import net.amoebaman.gamemaster.api.TeamAutoGame;
 import net.amoebaman.gamemaster.enums.MasterStatus;
 import net.amoebaman.gamemaster.enums.PlayerStatus;
@@ -13,50 +36,20 @@ import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.Align;
 import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.Scheme;
-import net.amoebaman.utils.chat.JsonMessage;
 import net.amoebaman.utils.chat.Message;
+import net.amoebaman.utils.chat.Scheme;
 import net.amoebaman.utils.maps.PlayerMap;
 import net.amoebaman.utils.nms.StatusBar;
+
 import net.minecraft.util.com.google.common.collect.Lists;
-
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.World;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
-import org.bukkit.entity.Tameable;
-import org.bukkit.entity.ThrownPotion;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
-import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.entity.EntityDeathEvent;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
-import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.entity.PotionSplashEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
-import org.bukkit.event.server.ServerListPingEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-
-import com.vexsoftware.votifier.model.Vote;
-import com.vexsoftware.votifier.model.VotifierEvent;
 
 @SuppressWarnings("deprecation")
 public class EventListener implements Listener {
+	
+	public void deregisterUnloadedGame(PluginDisableEvent event){
+		if(event.getPlugin() instanceof AutoGame)
+			GameMaster.deregisterGame((AutoGame) event.getPlugin());
+	}
 	
 	@EventHandler
 	public void blockPlace(BlockPlaceEvent event){
@@ -123,11 +116,11 @@ public class EventListener implements Listener {
 			 */
 			if(GameMaster.activeGame instanceof SafeSpawnModule){
 				SafeSpawnModule game = (SafeSpawnModule) GameMaster.activeGame;
-				if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
+				if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSafeRadius(victim)){
 					event.setCancelled(true);
 					Chat.send(damager, new Message(Scheme.WARNING).then("You can't damage enemies in their spawn"));
 				}
-				if(damager.getLocation().distance(game.getSafeLoc(damager)) < game.getSpawnRadius(damager) && victim.getLocation().distance(game.getSafeLoc(damager)) > game.getSpawnRadius(damager)){
+				if(damager.getLocation().distance(game.getSafeLoc(damager)) < game.getSafeRadius(damager) && victim.getLocation().distance(game.getSafeLoc(damager)) > game.getSafeRadius(damager)){
 					event.setCancelled(true);
 					Chat.send(damager, new Message(Scheme.WARNING).then("You can't attack enemies from your spawn"));
 				}
@@ -167,13 +160,13 @@ public class EventListener implements Listener {
 				case PREP:
 					Chat.send(player,
 						new Message(Scheme.HIGHLIGHT).then("We're getting ready to play ").then(GameMaster.activeGame).strong(),
-						new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next map")
+						new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next map")
 					);
 					break;
 				case INTERMISSION:
 					Chat.send(player,
 						new Message(Scheme.HIGHLIGHT).then("We're voting on the next game"),
-						new JsonMessage(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next game")
+						new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next game")
 					);
 				default: }
 		} }, 20);
@@ -248,16 +241,16 @@ public class EventListener implements Listener {
 					 */
 					if(GameMaster.status.active && GameMaster.getStatus(player) == PlayerStatus.PLAYING && player.isOnline()){
 						player.teleport(game.getRespawnLoc(player));
-						player.setNoDamageTicks(20 * game.getRespawnInvulnSeconds(player));
+						player.setNoDamageTicks(20 * game.getRespawnInvuln(player));
 						/*
 						 * If the game also happens to be MessagerCompatible, send messages as well
 						 */
 						if(game instanceof MessagerModule){
-							Chat.send(player, Align.box(((MessagerModule) game).getSpawnMessage(player), ""));
+							Chat.send(player, Align.addSpacers("", Align.center(((MessagerModule) game).getRespawnMessage(player))));
 						}
 						GameMaster.respawning.remove(player);
 					}
-				}}, 20 * game.getRespawnSeconds(player));
+				}}, 20 * game.getRespawnDelay(player));
 				return;
 			}
 		}
@@ -363,11 +356,11 @@ public class EventListener implements Listener {
 				if(GameMaster.activeGame instanceof TeamAutoGame){
 					TeamAutoGame game = (TeamAutoGame) GameMaster.activeGame;
 					if(game.getTeam(thrower) != game.getTeam(victim)){
-						if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSpawnRadius(victim)){
+						if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSafeRadius(victim)){
 							event.setIntensity(victim, 0);
 							Chat.send(thrower, new Message(Scheme.WARNING).then("You can't attack enemies in their spawn"));
 						}
-						if(thrower.getLocation().distance(game.getSafeLoc(thrower)) < game.getSpawnRadius(thrower) && victim.getLocation().distance(game.getSafeLoc(thrower)) >= game.getSpawnRadius(thrower)){
+						if(thrower.getLocation().distance(game.getSafeLoc(thrower)) < game.getSafeRadius(thrower) && victim.getLocation().distance(game.getSafeLoc(thrower)) >= game.getSafeRadius(thrower)){
 							event.setIntensity(victim, 0);
 							Chat.send(thrower, new Message(Scheme.WARNING).then("You can't attack enemies from your spawn"));
 						}

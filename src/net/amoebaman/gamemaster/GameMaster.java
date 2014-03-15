@@ -1,11 +1,6 @@
 package net.amoebaman.gamemaster;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,6 +21,8 @@ import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.S_Loc;
 import net.amoebaman.utils.chat.Align;
 import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.CustomChar;
+import net.amoebaman.utils.chat.Scheme;
 import net.amoebaman.utils.maps.PlayerMap;
 
 import org.bukkit.Bukkit;
@@ -51,39 +48,66 @@ import org.bukkit.scoreboard.Scoreboard;
 /**
  * 
  * The main functioning class of GameMaster that stores and manages most important information.
- * This is a complete rewrite of the code based on a better-functioning and more flexible system for maps that was devised later.
- * The potential sloppiness of surgically inserting the new map system made a full refactoring seem more appealing to me.
- * For the old code, see <code>com.amoebaman.gamemaster.GameMaster.java</code>
  * 
  * @author Dennison Richter
  *
  */
 public class GameMaster extends JavaPlugin{
 	
-	protected static final Set<AutoGame> games = new HashSet<AutoGame>();
-	protected static final Set<GameMap> maps = new HashSet<GameMap>();
-	public static final List<GameMap> mapHistory = new ArrayList<GameMap>();
-	
+	/** A mapping of all players on the server to their status with the game master */
 	public static final PlayerMap<PlayerStatus> players = new PlayerMap<PlayerStatus>(PlayerStatus.PLAYING);
+	
+	/** A mapping to store the last recorded damage taken for each player */
 	public static final PlayerMap<Long> lastDamage = new PlayerMap<Long>(0L);
+	
+	/** A set containing all players that are awaiting auto-respawn (if the current game implements {@link RespawnModule}) */
 	public static final Set<Player> respawning = new HashSet<Player>();
+	
+	/** A set containing all the players that are utilizing team-only chat */
 	public static final Set<Player> teamChatters = new HashSet<Player>();
 	
+	/** A set mapping all players to their most recent vote for the next game or map */
 	public static final Map<CommandSender, String> votes = new HashMap<CommandSender, String>();
 	
-	public static AutoGame activeGame, nextGame, lastGame;
-	public static GameMap activeMap, nextMap;
+	/** The game that is currently playing */
+	public static AutoGame activeGame;
 	
+	/** The game that will play next, overriding the vote */
+	public static AutoGame nextGame;
+	
+	/** The game that played most recently */
+	public static AutoGame lastGame;
+	
+	/** The map that is currently playing */
+	public static GameMap activeMap;
+	
+	/** The map that will play next, overriding the vote */
+	public static GameMap nextMap;
+	
+	/** The maps that have been most recently played */
+	public static final List<GameMap> mapHistory = new ArrayList<GameMap>();
+	
+	/** The master state */
 	public static MasterStatus status = MasterStatus.PREP;
-	public static Location mainLobby, fireworksLaunch;
+	
+	/** The main spawn point for the game master */
+	public static Location mainLobby;
+	
+	/** The location where victory fireworks are launched from */
+	public static Location fireworksLaunch;
+	
+	/** The map being edited by admins */
 	public static GameMap editMap;
-	public static int recurringOpsTaskID, worldTimeLock;
+	
+	/** The time when the current game started */
 	public static long gameStart;
+	
 	public static boolean debugCycle;
-	
-	
+	protected static int recurringOpsTaskID;
 	protected static String mainDir;
 	protected static File configFile, mapsFile, repairFile;
+	protected static final Set<AutoGame> games = new HashSet<AutoGame>();
+	protected static final Set<GameMap> maps = new HashSet<GameMap>();
 	
 	public void onEnable(){
 		/*
@@ -96,9 +120,9 @@ public class GameMaster extends JavaPlugin{
 		 */
 		getDataFolder().mkdirs();
 		mainDir = getDataFolder().getPath();
-		configFile = getConfigFile("config");
-		mapsFile = getConfigFile("maps");
-		repairFile = getConfigFile("repair");
+		configFile = GenUtil.getConfigFile(this,"config");
+		mapsFile = GenUtil.getConfigFile(this,"maps");
+		repairFile = GenUtil.getConfigFile(this,"repair");
 		/*
 		 * Load up configurations
 		 */
@@ -170,6 +194,7 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	public void onDisable(){
+		Bukkit.getScheduler().cancelTask(recurringOpsTaskID);
 		/*
 		 * Save up configurations
 		 */
@@ -189,37 +214,14 @@ public class GameMaster extends JavaPlugin{
 		catch(Exception e){ e.printStackTrace(); }
 	}
 	
-	public static File getConfigFile(String name){
-		try{
-			File file = new File(plugin().getDataFolder().getPath() + File.separator + name + ".yml");
-			if(!file.exists()){
-				plugin().getLogger().info("Loading pre-defined contents of " + name + ".yml");
-				file.createNewFile();
-				file.setWritable(true);
-				InputStream preset = GameMaster.class.getResourceAsStream("/" + name + ".yml");
-				if(preset != null){
-					BufferedReader reader = new BufferedReader(new InputStreamReader(preset));
-					BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-					while(reader.ready()){
-						writer.write(reader.readLine());
-						writer.newLine();
-					}
-					reader.close();
-					writer.close();
-				}
-			}
-			return file;
-		}
-		catch(Exception e){
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
 	public static JavaPlugin plugin(){ return (JavaPlugin) Bukkit.getPluginManager().getPlugin("GameMaster"); }
 	
 	public static Logger logger(){ return plugin().getLogger(); }
 	
+	/**
+	 * Registers an {@link AutoGame} with the game master.
+	 * @param game a game
+	 */
 	public static void registerGame(AutoGame game){
 		if(game != null){
 			if(games.add(game))
@@ -231,6 +233,10 @@ public class GameMaster extends JavaPlugin{
 			logger().warning("Failed to register null arena game");
 	}
 	
+	/**
+	 * Removes an {@link AutoGame} from the list of available games.
+	 * @param game a game
+	 */
 	protected static void deregisterGame(AutoGame game){
 		games.remove(game);
 	}
@@ -303,7 +309,7 @@ public class GameMaster extends JavaPlugin{
 				case PLAYING:
 					activeGame.addPlayer(player);
 					if(activeGame instanceof MessagerModule)
-						Chat.send(player, Align.box(((MessagerModule) activeGame).getSpawnMessage(player), "+"));
+						Chat.send(player, Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(((MessagerModule) activeGame).getRespawnMessage(player))));
 					break;
 			}
 		}
@@ -334,6 +340,11 @@ public class GameMaster extends JavaPlugin{
 		return players;
 	}
 	
+	/**
+	 * Clears a player's inventory and removes all their potion effects.
+	 * 
+	 * @param player a player
+	 */
 	public static void clearInventory(Player player){
 		player.closeInventory();
 		player.getInventory().clear();
@@ -342,6 +353,15 @@ public class GameMaster extends JavaPlugin{
 			player.removePotionEffect(effect.getType());
 	}
 	
+	/**
+	 * Resets a player fully.
+	 * <p>
+	 * Clears inventory; restores health, hunger, and saturation to full; removes
+	 * formatting from display name and list name; removes GameMaster records;
+	 * ejects the player from their vehicle.
+	 * 
+	 * @param player a player
+	 */
 	public static void resetPlayer(Player player){
 		clearInventory(player);
 		player.setHealth(player.getMaxHealth());
@@ -404,6 +424,16 @@ public class GameMaster extends JavaPlugin{
 		return killer;
 	}
 	
+	/**
+	 * Registers a set of blockstates to be automatically restored when the game ends, or
+	 * if the server shuts down prematurely.  This set is saved to a flatfile, so even if the
+	 * server crashes without warning these blocks will still be repaired on the next startup.
+	 * <p>
+	 * Games should register all the blocks they change in this manner, to ensure maps are
+	 * always repaired when the game is finished.
+	 * 
+	 * @param states
+	 */
 	@SuppressWarnings("deprecation")
     public static void defRepair(Set<BlockState> states){
 		YamlConfiguration repairYaml = new YamlConfiguration();
@@ -418,6 +448,9 @@ public class GameMaster extends JavaPlugin{
         }
 	}
 	
+	/**
+	 * Loads the repair list from flat-file and restores all the block states therein.
+	 */
 	@SuppressWarnings("deprecation")
     public static void repair(){
 		YamlConfiguration repairYaml = new YamlConfiguration();

@@ -4,6 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.bukkit.*;
+import org.bukkit.FireworkEffect.Type;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Firework;
+import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
+
 import net.amoebaman.gamemaster.GameFlow;
 import net.amoebaman.gamemaster.GameMaster;
 import net.amoebaman.gamemaster.enums.MasterStatus;
@@ -11,32 +19,16 @@ import net.amoebaman.gamemaster.enums.Team;
 import net.amoebaman.gamemaster.utils.Utils;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
-import net.amoebaman.utils.chat.Align;
-import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.Scheme;
-import net.amoebaman.utils.chat.JsonMessage;
-import net.amoebaman.utils.chat.Message;
-import net.minecraft.util.com.google.common.collect.Lists;
+import net.amoebaman.utils.chat.*;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.Color;
-import org.bukkit.FireworkEffect;
-import org.bukkit.FireworkEffect.Type;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Firework;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.FireworkMeta;
-
-public class Simple {
+public class Simple{
 	
 	/**
 	 * A simple method for adding a player to a TeamAutoGame.
-	 * This method will try to find the team with the fewest players and add the player to it.
-	 * It will also reset the player's status and send them to their spawn point.
+	 * This method will try to find the team with the fewest players and add the
+	 * player to it. It will also reset the player's status and send them to
+	 * their spawn point.
+	 * 
 	 * @param player the player to add
 	 * @param game the game that is running
 	 */
@@ -60,18 +52,21 @@ public class Simple {
 	/**
 	 * A simple method for removing a player from a TeamAutoGame.
 	 * This method simply removes the player's record from the team mapping.
+	 * 
 	 * @param player the player to remove
 	 * @param game the game that is running
 	 */
 	public static void removePlayer(Player player, TeamAutoGame game){
 		game.setTeam(player, null);
 	}
-
+	
 	/**
 	 * A simple method for balancing teams.
-	 * This method will look for teams who have numbers in extreme excess of the reasonable number.
-	 * If it finds one, it will search for another team with room for more players.
-	 * If it finds another team, it will transfer one player at random from the full team to the less full one.
+	 * This method will look for teams who have numbers in extreme excess of the
+	 * reasonable number. If it finds one, it will search for another team with
+	 * room for more players. If it finds another team, it will transfer one
+	 * player at random from the full team to the less full one.
+	 * 
 	 * @param game the game that is running
 	 */
 	public static void balanceTeams(TeamAutoGame game){
@@ -81,9 +76,9 @@ public class Simple {
 		for(Team team : game.getActiveTeams(GameMaster.activeMap)){
 			if(GameMaster.debugCycle)
 				GameMaster.logger().info(team + "'s size is " + game.getSize(team) + ", ideal is " + game.getProperSize(team));
-			if(game.getSize(team) > game.getProperSize(team) + 1){
+			if(game.getSize(team) >= game.getProperSize(team) + 1){
 				Team mostNeedy = null;
-				int leastPlayers = game.getSize(team);
+				double leastPlayers = game.getSize(team);
 				for(Team other : game.getActiveTeams(GameMaster.activeMap))
 					if(game.getSize(other) < leastPlayers){
 						mostNeedy = other;
@@ -97,8 +92,10 @@ public class Simple {
 	
 	/**
 	 * A simple method for changing a player's team.
-	 * This method simply looks for a different team at random, and swaps the player to that team.
-	 * There is no effort made to maintain team balance in the event that more than 2 teams are present.
+	 * This method simply looks for a different team at random, and swaps the
+	 * player to that team. There is no effort made to maintain team balance in
+	 * the event that more than 2 teams are present.
+	 * 
 	 * @param player the player to change the team of
 	 * @param game the game that is running
 	 */
@@ -115,13 +112,18 @@ public class Simple {
 	
 	/**
 	 * A simple method for getting a player's respawn point in a TeamAutoGame.
-	 * This method uses the player's team to get the respawn location from the active map's properties.
-	 * Specifically, it retrieves the location from the path "team-respawn/[TEAM]".
-	 * <br/>
-	 * If for some reason the player has not been mapped to a team, this method will return null.
+	 * This method uses the player's team to get the respawn location from the
+	 * active map's properties. Specifically, it retrieves the location from the
+	 * path "team-respawn/[TEAM]". <br>
+	 * <br>
+	 * If for some reason the player has not been mapped to a team, this method
+	 * will return null.
+	 * 
 	 * @param player the player in question
 	 * @param game the game that is running
-	 * @return the respawn location of the player's team as defined in the active map's properties, or null if the player isn't mapped to a team
+	 * @return the respawn location of the player's team as defined in the
+	 *         active map's properties, or null if the player isn't mapped to a
+	 *         team
 	 */
 	public static Location getRespawnLoc(Player player, TeamAutoGame game){
 		Team team = game.getTeam(player);
@@ -129,10 +131,12 @@ public class Simple {
 			return null;
 		return GameMaster.activeMap.properties.getLocation("team-respawn/" + team.name());
 	}
-
+	
 	/**
-	 * A simple method for getting the status of a TeamAutoGame to be sent to a player.
-	 * This method will include the scores of every team, giving each team its own line.
+	 * A simple method for getting the status of a TeamAutoGame to be sent to a
+	 * player. This method will include the scores of every team, giving each
+	 * team its own line.
+	 * 
 	 * @param game the game that is running
 	 * @return a list containing the scores of all teams in message format
 	 */
@@ -141,11 +145,13 @@ public class Simple {
 		for(Team team : game.getActiveTeams(GameMaster.activeMap))
 			message.add(new Message(Scheme.NORMAL).then("The ").then(team).color(team.chat).then(" team has ").then(game.getScore(team)).strong().then(" points").toString());
 		return message;
-	}	
+	}
 	
 	/**
-	 * A simple method for determining the color of a player's name in a TeamAutoGame.
-	 * This method will simply return the player's team color as their name color.
+	 * A simple method for determining the color of a player's name in a
+	 * TeamAutoGame. This method will simply return the player's team color as
+	 * their name color.
+	 * 
 	 * @param player the player in question
 	 * @param game the game running
 	 * @return the chat color of the player's team
@@ -154,14 +160,16 @@ public class Simple {
 		Team team = game.getTeam(player);
 		return team == null ? ChatColor.RESET : team.chat;
 	}
-
+	
 	/**
 	 * A simple method for determining the leader in a TeamAutoGame.
-	 * This method will simply look at the scores, and return the team with the highest score as the winner.
+	 * This method will simply look at the scores, and return the team with the
+	 * highest score as the winner.
+	 * 
 	 * @param game the game to judge
 	 * @return the team with the highest score
 	 */
-	public static Team getLeader(TeamAutoGame game) {
+	public static Team getLeader(TeamAutoGame game){
 		Team leader = null;
 		int maxScore = 0;
 		for(Team team : game.getActiveTeams(GameMaster.activeMap)){
@@ -169,21 +177,24 @@ public class Simple {
 				leader = team;
 				maxScore = game.getScore(team);
 			}
-			else if(game.getScore(team) == maxScore)
-				leader = Team.NEUTRAL;
+			else
+				if(game.getScore(team) == maxScore)
+					leader = Team.NEUTRAL;
 		}
 		return leader;
 	}
-
+	
 	/**
 	 * A simple method for starting a TeamAutoGame.
-	 * This method will first clear all teams and scores that may have been left over.
-	 * It will announce the beginning of the game, then split players into even and (hopefully) fair teams.
-	 * Finally, it will send all players to their spawn points.
+	 * This method will first clear all teams and scores that may have been left
+	 * over. It will announce the beginning of the game, then split players into
+	 * even and (hopefully) fair teams. Finally, it will send all players to
+	 * their spawn points.
+	 * 
 	 * @param game the game that is starting
 	 */
 	public static void start(TeamAutoGame game){
-
+		
 		Set<Team> activeTeams = game.getActiveTeams(GameMaster.activeMap);
 		
 		for(Team team : activeTeams){
@@ -191,10 +202,7 @@ public class Simple {
 			game.setScore(team, 0);
 		}
 		
-		Chat.broadcast(Align.box(Lists.newArrayList(
-				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame.getGameName().toUpperCase()).strong().then(" is starting").toString(),
-				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeMap).strong().then(" will be the battlefield").toString()
-		), Scheme.HIGHLIGHT.normal.color() + "I"));
+		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame.getGameName().toUpperCase()).strong().then(" is starting").toString(), new Message(Scheme.HIGHLIGHT).then(GameMaster.activeMap).strong().then(" will be the battlefield").toString())));
 		
 		List<Player> players = Utils.sort(GameMaster.getPlayers());
 		List<Set<Player>> split = Utils.split(players, activeTeams.size());
@@ -207,75 +215,70 @@ public class Simple {
 	
 	/**
 	 * A simple method for ending a TeamAutoGame.
-	 * This method will announce the end of the game and the winner, and will start the intermission after a 5-second delay.
+	 * This method will announce the end of the game and the winner, and will
+	 * start the intermission after a 5-second delay.
+	 * 
 	 * @param winner the team that has won the game
 	 * @param game the game that is ending
 	 */
 	public static void end(Team winner, TeamAutoGame game){
 		
-		//Null winner means tie game, change it to NEUTRAL to avoid obnoxious NPEs
+		// Null winner means tie game, change it to NEUTRAL to avoid obnoxious
+		// NPEs
 		if(winner == null)
 			winner = Team.NEUTRAL;
 		
-		//Increment victory/loss stats and give winners charges
+		// Increment victory/loss stats and give winners charges
 		for(Player player : GameMaster.getPlayers())
 			if(game.getTeam(player) == winner){
 				StatMaster.getHandler().incrementStat(player, "wins");
 				StatMaster.getHandler().adjustStat(player, "charges", 0.5);
-				Chat.send(player, new JsonMessage(Scheme.HIGHLIGHT)
-					.then("You have received ")
-					.then("0.5 charges").strong().tooltip(Scheme.HIGHLIGHT.normal + "You have " + StatMaster.getHandler().getStat(player, "charges") + " charges total")
-					.then(" for winning the game")
-				);
+				Chat.send(player, new Message(Scheme.HIGHLIGHT).then("You have received ").then("0.5 charges").strong().tooltip(Chat.format("Total of &z" + StatMaster.getHandler().getStat(player, "charges"), Scheme.NORMAL)).then(" for winning the game"));
 			}
 			else
 				StatMaster.getHandler().incrementStat(player, "losses");
 		
-		//Shoot off fireworks in the winning team's colors
+		// Shoot off fireworks in the winning team's colors
 		if(winner != null){
 			final Color color = winner.dye.getFireworkColor();
 			final Color[] grayscale = {Color.BLACK, Color.GRAY, Color.SILVER, Color.WHITE};
 			for(int i = 0; i < 50; i++)
-				Bukkit.getScheduler().scheduleSyncDelayedTask(game, new Runnable(){ public void run(){
-					FireworkEffect burst = FireworkEffect.builder()
-											.withColor(color.mixColors(grayscale[(int) (Math.random() * grayscale.length)]))
-											.withFade(color.mixColors(grayscale[(int) (Math.random() * grayscale.length)]))
-											.with(Type.values()[(int)(Math.random() * Type.values().length)])
-											.flicker(Math.random() > 0.5)
-											.trail(Math.random() > 0.5)
-											.build();
-					FireworkMeta meta = (FireworkMeta) new ItemStack(Material.FIREWORK).getItemMeta();
-					meta.addEffect(burst);
+				Bukkit.getScheduler().scheduleSyncDelayedTask(game, new Runnable(){
 					
-					Firework firework = (Firework) GameMaster.fireworksLaunch.getWorld().spawnEntity(GameMaster.fireworksLaunch.clone().add((Math.random() - 0.5) * 10, 0, (Math.random() - 0.5)), EntityType.FIREWORK);
-					firework.setFireworkMeta(meta);
-				}}, (int) (100 + i*4 + (Math.random()-0.5) * 4));
+					public void run(){
+						FireworkEffect burst = FireworkEffect.builder().withColor(color.mixColors(grayscale[(int) (Math.random() * grayscale.length)])).withFade(color.mixColors(grayscale[(int) (Math.random() * grayscale.length)])).with(Type.values()[(int) (Math.random() * Type.values().length)]).flicker(Math.random() > 0.5).trail(Math.random() > 0.5).build();
+						FireworkMeta meta = (FireworkMeta) new ItemStack(Material.FIREWORK).getItemMeta();
+						meta.addEffect(burst);
+						
+						Firework firework = (Firework) GameMaster.fireworksLaunch.getWorld().spawnEntity(GameMaster.fireworksLaunch.clone().add((Math.random() - 0.5) * 10, 0, (Math.random() - 0.5)), EntityType.FIREWORK);
+						firework.setFireworkMeta(meta);
+					}
+				}, (int) (100 + i * 4 + (Math.random() - 0.5) * 4));
 		}
-
-		//Purge the scoreboard
+		
+		// Purge the scoreboard
 		for(Team team : game.getActiveTeams(GameMaster.activeMap)){
 			game.setScore(team, -1);
 			team.removeBukkitTeam();
 		}
 		
-		//Suspend the game and get ready to start the intermission
+		// Suspend the game and get ready to start the intermission
 		GameMaster.status = MasterStatus.SUSPENDED;
 		
-		Chat.broadcast(Align.box(Lists.newArrayList(
-				new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame.getGameName().toUpperCase()).strong().then(" is finished").toString(),
-				winner == Team.NEUTRAL
-					? new Message(Scheme.HIGHLIGHT).then("The match ended in a draw").toString()
-					: new Message(Scheme.HIGHLIGHT).then("The ").then(winner).color(winner.chat).then(" team won the game").toString()
-		), Scheme.HIGHLIGHT.normal.color() + "I"));
-
-		Bukkit.getScheduler().scheduleSyncDelayedTask(game, new Runnable(){ public void run(){
-			GameFlow.startIntermission();
-		} }, 100);
+		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(new Message(Scheme.HIGHLIGHT).then(GameMaster.activeGame.getGameName().toUpperCase()).strong().then(" is finished").toString(), winner == Team.NEUTRAL ? new Message(Scheme.HIGHLIGHT).then("The match ended in a draw").toString() : new Message(Scheme.HIGHLIGHT).then("The ").then(winner).color(winner.chat).then(" team won the game").toString())));
+		
+		Bukkit.getScheduler().scheduleSyncDelayedTask(game, new Runnable(){
+			
+			public void run(){
+				GameFlow.startIntermission();
+			}
+		}, 100);
 	}
 	
 	/**
 	 * A simple method for aborting an AutoGame.
 	 * This method will simply announce the abortion, and do nothing further.
+	 * 
 	 * @param game the game that is being aborted
 	 */
 	public static void abort(AutoGame game){
