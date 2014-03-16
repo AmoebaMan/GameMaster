@@ -46,7 +46,7 @@ import net.minecraft.util.com.google.common.collect.Lists;
 @SuppressWarnings("deprecation")
 public class EventListener implements Listener {
 	
-	public void deregisterUnloadedGame(PluginDisableEvent event){
+	public void deregisterUnloadedGames(PluginDisableEvent event){
 		if(event.getPlugin() instanceof AutoGame)
 			GameMaster.deregisterGame((AutoGame) event.getPlugin());
 	}
@@ -161,13 +161,13 @@ public class EventListener implements Listener {
 					Chat.send(player,
 						new Message(Scheme.HIGHLIGHT).then("We're getting ready to play ").then(GameMaster.activeGame).strong(),
 						new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next map")
-					);
+						);
 					break;
 				case INTERMISSION:
 					Chat.send(player,
 						new Message(Scheme.HIGHLIGHT).then("We're voting on the next game"),
 						new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote on the next game")
-					);
+						);
 				default: }
 		} }, 20);
 		/*
@@ -260,15 +260,13 @@ public class EventListener implements Listener {
 	public void playerDeath(EntityDeathEvent event){
 		event.getDrops().clear();
 		GameMaster.lastDamage.remove(event.getEntity());
-		if(event instanceof PlayerDeathEvent){
-			Player player = (Player) event.getEntity();
-			StatusBar.removeStatusBar(player);
-			if(splashHarms.containsKey(player) && (player.getLastDamageCause().getCause() == DamageCause.MAGIC || player.getLastDamageCause().getCause() == DamageCause.WITHER)){
-				Player thrower = Bukkit.getPlayer(splashHarms.get(player));
-				if(thrower != null){
-					player.setLastDamageCause(new EntityDamageByEntityEvent(thrower, player, DamageCause.ENTITY_ATTACK, 10.0));
-					splashHarms.remove(player);
-				}
+		Player player = (Player) event.getEntity();
+		StatusBar.removeStatusBar(player);
+		if(splashHarms.containsKey(player) && (player.getLastDamageCause().getCause() == DamageCause.MAGIC || player.getLastDamageCause().getCause() == DamageCause.WITHER)){
+			Player thrower = Bukkit.getPlayer(splashHarms.get(player));
+			if(thrower != null){
+				player.setLastDamageCause(new EntityDamageByEntityEvent(thrower, player, DamageCause.ENTITY_ATTACK, 10.0));
+				splashHarms.remove(player);
 			}
 		}
 	}
