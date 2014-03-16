@@ -1,9 +1,7 @@
 package net.amoebaman.gamemasterv3;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
@@ -60,6 +58,7 @@ public class GameMaster extends JavaPlugin{
 	private GameState state = GameState.INTERMISSION;
 	private long gameStart = 0L;
 	
+	private GameTicker ticker;
 	private Progression progression;
 	private Players playerManager;
 	
@@ -127,7 +126,8 @@ public class GameMaster extends JavaPlugin{
 		/*
 		 * Start the ticker
 		 */
-		tickTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new GameTicker(this), 0, 5L);
+		ticker = new GameTicker(this);
+		tickTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, ticker, 0, 5L);
 		/*
 		 * Do scoreboard stuff
 		 */
@@ -185,18 +185,14 @@ public class GameMaster extends JavaPlugin{
 		return INSTANCE;
 	}
 	
-	
     protected StringMap<AutoGame> getGames(){
     	return games;
     }
     
-
-	
     protected StringMap<GameMap> getMaps(){
     	return maps;
     }
     
-
 	/**
 	 * Registers an {@link AutoGame} with the master. If a game has already been
 	 * registered with the same name, it will be overwritten.
@@ -362,6 +358,21 @@ public class GameMaster extends JavaPlugin{
 		return playerManager;
 	}
 	
+    /**
+     * Gets the ticker.
+     * 
+     * @return the ticker
+     */
+    public GameTicker getTicker(){
+    	return ticker;
+    }
+
+	
+    protected Progression getProgression(){
+    	return progression;
+    }
+    
+
 	/**
 	 * Gets the current state of the game. See {@link GameState}.
 	 * 
@@ -373,6 +384,20 @@ public class GameMaster extends JavaPlugin{
 	
 	protected void setState(GameState state){
 		this.state = state;
+	}
+	
+	/**
+	 * Pauses the game.
+	 */
+	public void pauseGame(){
+		setState(GameState.PAUSED);
+	}
+	
+	/**
+	 * Resumes the game.
+	 */
+	public void resumeGame(){
+		setState(GameState.RUNNING);
 	}
 	
 	/**
@@ -517,8 +542,6 @@ public class GameMaster extends JavaPlugin{
 		this.welcome = welcome;
 	}
 
-	
-    
 	/**
      * Gets the time the game started.
      * 
@@ -528,10 +551,24 @@ public class GameMaster extends JavaPlugin{
     	return gameStart;
     }
     
-	
-
     protected void stampGameStart(){
     	gameStart = System.currentTimeMillis();
     }
 	
+    /**
+     * Logs a message to the console.
+     * 
+     * @param message a message
+     */
+    public void log(String message){
+    	getLogger().info(message);
+    }
+    
+    /**
+     * Ends the game and begins the intermission.
+     */
+    public void endGame(){
+    	progression.intermission();
+    }
+    
 }

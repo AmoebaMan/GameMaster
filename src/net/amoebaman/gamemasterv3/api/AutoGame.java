@@ -3,12 +3,20 @@ package net.amoebaman.gamemasterv3.api;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
+import net.amoebaman.gamemasterv3.GameMaster;
+
 /**
  * Represents a game that the game master can run automatically.
  * 
  * @author AmoebaMan
  */
 public abstract class AutoGame{
+	
+	protected GameMaster master;
+	
+	public void register(){
+		master = GameMaster.getMaster().registerGame(this);
+	}
 	
 	/**
 	 * Gets the name of the game, in a nice, presentable form.

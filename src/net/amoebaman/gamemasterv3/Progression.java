@@ -40,6 +40,10 @@ public class Progression{
 		mapVoting = master.getConfig().getInt("timing.map-voting", 15);
 	}
 	
+	public int getIntermissionLength(){
+		return intermission;
+	}
+	
 	public void intermission(){
 		/*
 		 * Save the server
@@ -104,6 +108,10 @@ public class Progression{
 					.command("/vote")
 				.t(" to vote on the next game")
 		);
+		/*
+		 * Stamp intermission start
+		 */
+		master.stampGameStart();
 		/*
 		 * Schedule the next phase
 		 */

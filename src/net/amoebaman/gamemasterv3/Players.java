@@ -108,8 +108,7 @@ public class Players implements Listener{
 		/*
 		 * Reset display properties
 		 */
-		player.setDisplayName(player.getName());
-		player.setPlayerListName(player.getName());
+		updateColors(player);
 		/*
 		 * Reset recorded player stats
 		 */
@@ -122,17 +121,15 @@ public class Players implements Listener{
 	 * colors designated by the active game using
 	 * {@link AutoGame#getColor(Player)}.
 	 */
-	public void updateColors(){
-		for(Player player : master.getPlayers()){
-			String colorName = player.getName();
-			if(master.getState() != GameState.INTERMISSION){
-				ChatColor c = master.getActiveGame().getColor(player);
-				if(c != null)
-					colorName = c + player.getName();
-			}
-			player.setDisplayName(colorName);
-			player.setPlayerListName(colorName);
+	public void updateColors(Player player){
+		String colorName = player.getName();
+		if(master.getState() != GameState.INTERMISSION){
+			ChatColor c = master.getActiveGame().getColor(player);
+			if(c != null)
+				colorName = c + player.getName();
 		}
+		player.setDisplayName(colorName);
+		player.setPlayerListName(colorName);
 	}
 	
 }
