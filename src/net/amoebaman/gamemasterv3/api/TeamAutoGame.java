@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.kitteh.tag.TagAPI;
 
+import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.util.Utils;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
@@ -240,6 +241,8 @@ public abstract class TeamAutoGame extends AutoGame{
 	}
 	
 	public ChatColor getColor(Player player){
+		if(!playerTeams.containsKey(player))
+			return null;
 		return getTeam(player).chat;
 	}
 	

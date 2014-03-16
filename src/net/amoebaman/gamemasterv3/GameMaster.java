@@ -58,6 +58,7 @@ public class GameMaster extends JavaPlugin{
 	private GameState state = GameState.INTERMISSION;
 	private long gameStart = 0L;
 	
+	private EventListener listener;
 	private GameTicker ticker;
 	private Progression progression;
 	private Players playerManager;
@@ -140,6 +141,8 @@ public class GameMaster extends JavaPlugin{
 		/*
 		 * Set up components
 		 */
+		listener = new EventListener(this);
+		Bukkit.getPluginManager().registerEvents(listener, this);
 		progression = new Progression(this);
 		playerManager = new Players(this);
 		/*
@@ -185,14 +188,14 @@ public class GameMaster extends JavaPlugin{
 		return INSTANCE;
 	}
 	
-    protected StringMap<AutoGame> getGames(){
-    	return games;
-    }
-    
-    protected StringMap<GameMap> getMaps(){
-    	return maps;
-    }
-    
+	protected StringMap<AutoGame> getGames(){
+		return games;
+	}
+	
+	protected StringMap<GameMap> getMaps(){
+		return maps;
+	}
+	
 	/**
 	 * Registers an {@link AutoGame} with the master. If a game has already been
 	 * registered with the same name, it will be overwritten.
@@ -358,21 +361,23 @@ public class GameMaster extends JavaPlugin{
 		return playerManager;
 	}
 	
-    /**
-     * Gets the ticker.
-     * 
-     * @return the ticker
-     */
-    public GameTicker getTicker(){
-    	return ticker;
-    }
-
+	protected EventListener getListener(){
+		return listener;
+	}
 	
-    protected Progression getProgression(){
-    	return progression;
-    }
-    
-
+	/**
+	 * Gets the ticker.
+	 * 
+	 * @return the ticker
+	 */
+	public GameTicker getTicker(){
+		return ticker;
+	}
+	
+	protected Progression getProgression(){
+		return progression;
+	}
+	
 	/**
 	 * Gets the current state of the game. See {@link GameState}.
 	 * 
@@ -459,7 +464,7 @@ public class GameMaster extends JavaPlugin{
 	public GameMap getActiveMap(){
 		return activeMap;
 	}
-
+	
 	protected void setActiveGame(AutoGame activeGame){
 		this.activeGame = activeGame;
 	}
@@ -541,34 +546,34 @@ public class GameMaster extends JavaPlugin{
 	protected void setWelcome(Location welcome){
 		this.welcome = welcome;
 	}
-
-	/**
-     * Gets the time the game started.
-     * 
-     * @return the time
-     */
-    public long getGameStart(){
-    	return gameStart;
-    }
-    
-    protected void stampGameStart(){
-    	gameStart = System.currentTimeMillis();
-    }
 	
-    /**
-     * Logs a message to the console.
-     * 
-     * @param message a message
-     */
-    public void log(String message){
-    	getLogger().info(message);
-    }
-    
-    /**
-     * Ends the game and begins the intermission.
-     */
-    public void endGame(){
-    	progression.intermission();
-    }
-    
+	/**
+	 * Gets the time the game started.
+	 * 
+	 * @return the time
+	 */
+	public long getGameStart(){
+		return gameStart;
+	}
+	
+	protected void stampGameStart(){
+		gameStart = System.currentTimeMillis();
+	}
+	
+	/**
+	 * Logs a message to the console.
+	 * 
+	 * @param message a message
+	 */
+	public void log(String message){
+		getLogger().info(message);
+	}
+	
+	/**
+	 * Ends the game and begins the intermission.
+	 */
+	public void endGame(){
+		progression.intermission();
+	}
+	
 }

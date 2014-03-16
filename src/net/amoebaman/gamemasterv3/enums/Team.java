@@ -1,9 +1,11 @@
-package net.amoebaman.gamemasterv3.api;
+package net.amoebaman.gamemasterv3.enums;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
+
+import net.amoebaman.gamemasterv3.api.TeamAutoGame;
 
 /**
  * Represents the various teams that can be tracked by a {@link TeamAutoGame}.

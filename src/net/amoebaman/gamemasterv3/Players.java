@@ -8,6 +8,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffect;
+import org.kitteh.tag.TagAPI;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
@@ -23,7 +24,6 @@ public class Players implements Listener{
 	private PlayerMap<String> lastDamager = new PlayerMap<String>("");
 	private PlayerMap<Long> lastDamageTime = new PlayerMap<Long>(0L);
 	private Set<Player> respawning = new HashSet<Player>();
-	private Set<Player> teamChatting = new HashSet<Player>();
 	
 	private GameMaster master;
 	
@@ -109,6 +109,7 @@ public class Players implements Listener{
 		 * Reset display properties
 		 */
 		updateColors(player);
+		TagAPI.refreshPlayer(player);
 		/*
 		 * Reset recorded player stats
 		 */
@@ -130,6 +131,15 @@ public class Players implements Listener{
 		}
 		player.setDisplayName(colorName);
 		player.setPlayerListName(colorName);
+	}
+	
+	public boolean isRespawning(Player player){
+		return respawning.contains(player);
+	}
+	
+	public void toggleRespawning(Player player){
+		if(!respawning.remove(player))
+			respawning.add(player);
 	}
 	
 }
