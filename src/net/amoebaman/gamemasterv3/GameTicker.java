@@ -26,6 +26,10 @@ public class GameTicker implements Runnable{
 		this.master = master;
 	}
 	
+	protected void debug(){
+		tickDebug = true;
+	}
+	
 	public boolean isDebugging(){
 		return tickDebug;
 	}
@@ -127,10 +131,16 @@ public class GameTicker implements Runnable{
 		for(Player player : master.getPlayers())
 			master.getPlayerManager().updateColors(player);
 		/*
+		 * Kick AFK suckers
+		 */
+		for(Player player : master.getPlayers())
+			; //TODO implement
+		/*
 		 * Turn off the debug cycle
 		 */
 		if(tickDebug)
 			master.log("Debug is finished");
 		tickDebug = false;
 	}
+
 }

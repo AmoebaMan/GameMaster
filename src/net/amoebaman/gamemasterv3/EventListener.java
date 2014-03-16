@@ -1,28 +1,30 @@
 package net.amoebaman.gamemasterv3;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
-import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerRespawnEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.potion.PotionEffect;
+
+import com.vexsoftware.votifier.model.Vote;
+import com.vexsoftware.votifier.model.VotifierEvent;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.TeamAutoGame;
@@ -30,10 +32,16 @@ import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.gamemasterv3.modules.RespawnModule;
 import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
+import net.amoebaman.kitmaster.enums.GiveKitContext;
+import net.amoebaman.kitmaster.utilities.ClearKitsEvent;
+import net.amoebaman.kitmaster.utilities.GiveKitEvent;
+import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.chat.Chat;
 import net.amoebaman.utils.chat.Message;
 import net.amoebaman.utils.chat.Scheme;
 import net.amoebaman.utils.nms.StatusBar;
+
+import net.minecraft.util.com.google.common.collect.Lists;
 
 public class EventListener implements Listener{
 	
@@ -45,9 +53,12 @@ public class EventListener implements Listener{
 		this.master = master;
 	}
 	
-	public void toggleTeamChat(Player player){
-		if(!teamChatting.remove(player))
+	public boolean toggleTeamChat(Player player){
+		if(!teamChatting.remove(player)){
 			teamChatting.add(player);
+			return true;
+		}
+		return false;
 	}
 	
 	@EventHandler
@@ -186,7 +197,7 @@ public class EventListener implements Listener{
 		if(!(event.getEntity() instanceof Player))
 			return;
 		Player player = (Player) event.getEntity();
-		if(event.getCause() == DamageCause.MAGIC || event.getCause() == DamageCause.POISON)
+		if(event.getCause() == DamageCause.FIRE_TICK || event.getCause() == DamageCause.MAGIC || event.getCause() == DamageCause.WITHER || event.getCause() == DamageCause.POISON)
 			master.getPlayerManager().stampDamage(player, master.getPlayerManager().getLastDamager(player));
 	}
 	
@@ -261,7 +272,7 @@ public class EventListener implements Listener{
 		}
 	}
 	
-	@EventHandler(priority=EventPriority.LOW)
+	@EventHandler
 	public void playerRespawn(final PlayerRespawnEvent event){
 		final Player player = event.getPlayer();
 		/*
@@ -308,22 +319,125 @@ public class EventListener implements Listener{
 	@EventHandler
 	public void updateServerList(ServerListPingEvent event){
 		if(master.getConfig().getBoolean("wrap-server", false)){
-		if(master.getState() == GameState.INTERMISSION){
-			if(master.getActiveGame() == null)
-				event.setMotd(new Message(Scheme.HIGHLIGHT).t("Voting on the next game").toString());
-			else if(master.getActiveMap() == null)
-				event.setMotd(new Message(Scheme.HIGHLIGHT).t("Voting on a map for ").t(master.getActiveGame()).s().toString());
+			if(master.getState() == GameState.INTERMISSION){
+				if(master.getActiveGame() == null)
+					event.setMotd(new Message(Scheme.HIGHLIGHT).t("Voting on the next game").toString());
+				else if(master.getActiveMap() == null)
+					event.setMotd(new Message(Scheme.HIGHLIGHT).t("Voting on a map for ").t(master.getActiveGame()).s().toString());
+				else
+					event.setMotd(new Message(Scheme.HIGHLIGHT).t("We're waiting for").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().t(" to start").toString());
+			}
 			else
-				event.setMotd(new Message(Scheme.HIGHLIGHT).t("We're waiting for").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().t(" to start").toString());
-		}
-		else
-			event.setMotd(new Message(Scheme.HIGHLIGHT).t("Playing ").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().toString());
+				event.setMotd(new Message(Scheme.HIGHLIGHT).t("Playing ").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().toString());
 		}
 	}
 	
+	@EventHandler
+	public void killProjectilesOnKitChange(ClearKitsEvent event){
+		Player player = event.getPlayer();
+		if(master.getState(player) != PlayerState.EXTERIOR)
+			for(Projectile proj : player.getWorld().getEntitiesByClass(Projectile.class))
+				if(player.equals(proj.getShooter()))
+					proj.remove();
+	}
 	
+	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
+	public void restrictCommandKitsToSpawns(GiveKitEvent event){
+		final Player player = event.getPlayer();
+		if(master.getState(player) == PlayerState.PLAYING && master.getState() == GameState.RUNNING)
+			if(master.getActiveGame() instanceof SafeSpawnModule){
+				SafeSpawnModule game = (SafeSpawnModule) master.getActiveGame();
+				if(player.getLocation().distance(game.getSafeLoc(player)) > game.getSafeRadius(player))
+				if(!event.getContext().overrides && event.getContext() != GiveKitContext.SIGN_TAKEN && !player.hasPermission("gamemaster.globalkit")){
+					new Message(Scheme.WARNING)
+						.then("You must be in your spawn to take kits via command")
+						.send(player);
+					event.setCancelled(true);
+				}
+			}
+	}
 	
+	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
+	public void forbidChestStorage(InventoryClickEvent event){
+		Player player = (Player) event.getWhoClicked();
+		if(master.getState(player) != PlayerState.EXTERIOR && event.getView().getTopInventory() != null)
+			switch(event.getView().getTopInventory().getType()){
+				case CRAFTING: case CREATIVE: case PLAYER:
+					event.setCancelled(false);
+					break;
+				default:
+					event.setCancelled(true);
+					break;
+			}
+	}
 	
+	@EventHandler(priority=EventPriority.HIGHEST)
+	public void teamChat(AsyncPlayerChatEvent event){
+		Player player = event.getPlayer();
+		if(teamChatting.contains(player) && master.getState(player) == PlayerState.PLAYING && master.getState() != GameState.INTERMISSION && master.getActiveGame() instanceof TeamAutoGame){
+			TeamAutoGame game = (TeamAutoGame) master.getActiveGame();
+			for(Player other : Bukkit.getOnlinePlayers())
+				if(game.getTeam(player) != game.getTeam(other))
+					event.getRecipients().remove(other);
+			event.setMessage("(" + game.getTeam(player).chat + "TEAM" + ChatColor.WHITE + ") " + event.getMessage());
+		}
+	}
+
+	@EventHandler
+	public void votifier(VotifierEvent event){
+		Vote vote = event.getVote();
+		if(vote == null){
+			master.log("VotifierEvent returned null vote");
+			return;
+		}
+		master.log("Received vote from " + vote.getServiceName() + " by " + vote.getUsername() + " from " + vote.getAddress() + " at " + vote.getTimeStamp());
+		OfflinePlayer player = Bukkit.getPlayer(vote.getUsername());
+		if(player == null)
+			player = Bukkit.getOfflinePlayer(vote.getUsername());
+		if(player.hasPlayedBefore() || player.isOnline()){
+			StatMaster.getHandler().incrementStat(player, "charges");
+			StatMaster.getHandler().incrementCommunityStat("votes");
+			new Message(Scheme.HIGHLIGHT)
+				.t(player.getName()).s()
+				.t(" voted for the server, and now has ")
+				.t(StatMaster.getHandler().getStat(player, "charges")).s()
+				.t(" charges")
+				.broadcast();
+		}
+	}
 	
+	@SuppressWarnings("deprecation")
+    @EventHandler
+	public void managePotionSplashes(PotionSplashEvent event){
+		ThrownPotion potion = event.getPotion();
+		Player thrower = null;
+		if(potion.getShooter() instanceof Player)
+			thrower = (Player) potion.getShooter();
+		if(thrower == null || master.getState() != GameState.RUNNING)
+			return;
+		/*
+		 * Check to see if this potion is harmful
+		 */
+		boolean harmful = false;
+		List<Integer> ids = Lists.newArrayList(2,4,7,9,15,17,18,19,20);
+		for(PotionEffect effect : potion.getEffects())
+			if(ids.contains(effect.getType().getId()))
+				harmful = true;
+		/*
+		 * We don't actually care if it's not harmful
+		 */
+		if(harmful)
+			for(LivingEntity entity : event.getAffectedEntities())
+				if(entity instanceof Player){
+					/*
+					 * Run a mock normal damage event to see if this is allowed
+					 */
+					Player victim = (Player) entity;
+					EntityDamageByEntityEvent tester = new EntityDamageByEntityEvent(thrower, victim, DamageCause.ENTITY_ATTACK, 0.0);
+					entityDamageModify(tester);
+					if(tester.isCancelled())
+						event.setIntensity(victim, 0);
+				}
+	}
 	
 }

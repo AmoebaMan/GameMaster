@@ -23,7 +23,7 @@ import net.amoebaman.utils.chat.Scheme;
 
 
 public class Progression{
-
+	
 	private AutoGame forcedNextGame;
 	private Queue<AutoGame> gameHistory = new ArrayDeque<AutoGame>();
 	private GameMap forcedNextMap;
@@ -42,6 +42,30 @@ public class Progression{
 	
 	public int getIntermissionLength(){
 		return intermission;
+	}
+	
+	protected AutoGame getNextGame(){
+		return forcedNextGame;
+	}
+	
+	protected Queue<AutoGame> getGameHistory(){
+		return gameHistory;
+	}
+	
+	protected GameMap getNextMap(){
+		return forcedNextMap;
+	}
+	
+	protected Queue<GameMap> getMapHistory(){
+		return mapHistory;
+	}
+	
+	protected void setNextGame(AutoGame nextGame){
+		forcedNextGame = nextGame;
+	}
+	
+	protected void setNextMap(GameMap nextMap){
+		forcedNextMap = nextMap;
 	}
 	
 	public void intermission(){
@@ -94,20 +118,9 @@ public class Progression{
 			master.setActiveMap(null);
 		}
 		/*
-		 * Broadcast status 
+		 * Broadcast status
 		 */
-		Chat.broadcast(
-			new Message(Scheme.HIGHLIGHT)
-				.t("The next game will start in ")
-				.t(intermission + " seconds").s(),
-			new Message(Scheme.HIGHLIGHT)
-				.t("Voting on the next game is open for ")
-				.t(gameVoting + " seconds").s(),
-			new Message(Scheme.HIGHLIGHT)
-				.t("CLICK HERE").s()
-					.command("/vote")
-				.t(" to vote on the next game")
-		);
+		Chat.broadcast(new Message(Scheme.HIGHLIGHT).t("The next game will start in ").t(intermission + " seconds").s(), new Message(Scheme.HIGHLIGHT).t("Voting on the next game is open for ").t(gameVoting + " seconds").s(), new Message(Scheme.HIGHLIGHT).t("CLICK HERE").s().command("/vote").t(" to vote on the next game"));
 		/*
 		 * Stamp intermission start
 		 */
@@ -115,9 +128,12 @@ public class Progression{
 		/*
 		 * Schedule the next phase
 		 */
-		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
-			endGameVoting();
-		}}, gameVoting * 20);
+		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
+			
+			public void run(){
+				endGameVoting();
+			}
+		}, gameVoting * 20);
 	}
 	
 	private void endGameVoting(){
@@ -126,7 +142,7 @@ public class Progression{
 		 */
 		AutoGame mostVoted = master.getGame(master.getMostVoted());
 		if(mostVoted == null){
-			master.setActiveGame(GenUtil.getRandomElement(master.getGames().values()));
+			master.setActiveGame(GenUtil.getRandomElement(master.getGames()));
 			new Message(Scheme.HIGHLIGHT).then("No votes were cast - randomly choosing a game").broadcast();
 		}
 		else
@@ -139,25 +155,16 @@ public class Progression{
 		/*
 		 * Broadcast
 		 */
-		Chat.broadcast(
-			new Message(Scheme.HIGHLIGHT)
-				.t(master.getActiveGame()).s()
-				.t(" will start in ")
-				.t((intermission - gameVoting) + " seconds").s(),
-			new Message(Scheme.HIGHLIGHT)
-				.t("Voting on the next map is open for ")
-				.t(mapVoting + " seconds").s(),
-			new Message(Scheme.HIGHLIGHT)
-				.t("CLICK HERE").s()
-					.command("/vote")
-				.t(" to vote on the next map")
-		);
+		Chat.broadcast(new Message(Scheme.HIGHLIGHT).t(master.getActiveGame()).s().t(" will start in ").t((intermission - gameVoting) + " seconds").s(), new Message(Scheme.HIGHLIGHT).t("Voting on the next map is open for ").t(mapVoting + " seconds").s(), new Message(Scheme.HIGHLIGHT).t("CLICK HERE").s().command("/vote").t(" to vote on the next map"));
 		/*
 		 * Schedule the next phase
 		 */
-		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
-			endMapVoting();
-		} }, mapVoting * 20);
+		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
+			
+			public void run(){
+				endMapVoting();
+			}
+		}, mapVoting * 20);
 	}
 	
 	private void endMapVoting(){
@@ -166,7 +173,7 @@ public class Progression{
 		 */
 		GameMap mostVoted = master.getMap(master.getMostVoted());
 		if(mostVoted == null){
-			master.setActiveMap(GenUtil.getRandomElement(master.getMaps().values()));
+			master.setActiveMap(GenUtil.getRandomElement(master.getMaps()));
 			new Message(Scheme.HIGHLIGHT).then("No votes were cast - randomly choosing a map").broadcast();
 		}
 		else
@@ -179,19 +186,13 @@ public class Progression{
 		/*
 		 * Broadcast
 		 */
-		Chat.broadcast(
-			new Message(Scheme.HIGHLIGHT)
-				.t(master.getActiveGame()).s()
-				.t(" on ")
-				.t(master.getActiveMap()).s()
-				.t(" will start in ")
-				.t((intermission - gameVoting) + " seconds").s(),
-			new Message(Scheme.HIGHLIGHT)
-				.t("Prepare for battle")
-		);
-		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
-			startNextGame();
-		}}, (intermission - gameVoting - mapVoting) * 20);
+		Chat.broadcast(new Message(Scheme.HIGHLIGHT).t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().t(" will start in ").t((intermission - gameVoting) + " seconds").s(), new Message(Scheme.HIGHLIGHT).t("Prepare for battle"));
+		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
+			
+			public void run(){
+				startNextGame();
+			}
+		}, (intermission - gameVoting - mapVoting) * 20);
 	}
 	
 	private void startNextGame(){
@@ -207,12 +208,15 @@ public class Progression{
 		/*
 		 * Reset player tags a second later to prevent invisi-glitches
 		 */
-		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
+		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
 			
-			for(Player player : master.getPlayers())
-				TagAPI.refreshPlayer(player);
+			public void run(){
 				
-		}}, 20);
+				for(Player player : master.getPlayers())
+					TagAPI.refreshPlayer(player);
+				
+			}
+		}, 20);
 	}
 	
 }

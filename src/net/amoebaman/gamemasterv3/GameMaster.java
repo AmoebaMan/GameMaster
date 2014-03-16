@@ -1,6 +1,7 @@
 package net.amoebaman.gamemasterv3;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -26,6 +27,7 @@ import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
+import net.amoebaman.utils.CommandController;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.S_Loc;
 import net.amoebaman.utils.maps.PlayerMap;
@@ -49,7 +51,7 @@ public class GameMaster extends JavaPlugin{
 	private PlayerMap<String> votes = new PlayerMap<String>("");
 	
 	private AutoGame activeGame;
-	private GameMap activeMap;
+	private GameMap activeMap, editMap;
 	
 	private Location lobby, fireworks, welcome;
 	
@@ -58,7 +60,8 @@ public class GameMaster extends JavaPlugin{
 	private GameState state = GameState.INTERMISSION;
 	private long gameStart = 0L;
 	
-	private EventListener listener;
+	private CommandListener commands;
+	private EventListener events;
 	private GameTicker ticker;
 	private Progression progression;
 	private Players playerManager;
@@ -141,8 +144,10 @@ public class GameMaster extends JavaPlugin{
 		/*
 		 * Set up components
 		 */
-		listener = new EventListener(this);
-		Bukkit.getPluginManager().registerEvents(listener, this);
+		commands = new CommandListener(this);
+		events = new EventListener(this);
+		CommandController.registerCommands(commands);
+		Bukkit.getPluginManager().registerEvents(events, this);
 		progression = new Progression(this);
 		playerManager = new Players(this);
 		/*
@@ -188,12 +193,12 @@ public class GameMaster extends JavaPlugin{
 		return INSTANCE;
 	}
 	
-	protected StringMap<AutoGame> getGames(){
-		return games;
+	protected Collection<AutoGame> getGames(){
+		return games.values();
 	}
 	
-	protected StringMap<GameMap> getMaps(){
-		return maps;
+	protected Collection<GameMap> getMaps(){
+		return maps.values();
 	}
 	
 	/**
@@ -362,7 +367,7 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	protected EventListener getListener(){
-		return listener;
+		return events;
 	}
 	
 	/**
@@ -465,6 +470,19 @@ public class GameMaster extends JavaPlugin{
 		return activeMap;
 	}
 	
+	/**
+	 * Gets the map being edited.
+	 * 
+	 * @return the map
+	 */
+	public GameMap getEditMap(){
+		return editMap;
+	}
+	
+	protected void setEditMap(GameMap map){
+		editMap = map;
+	}
+	
 	protected void setActiveGame(AutoGame activeGame){
 		this.activeGame = activeGame;
 	}
@@ -488,8 +506,18 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	/**
+	 * Lots a player's vote.
+	 * 
+	 * @param player a player
+	 * @param vote their vote
+	 */
+	public void logVote(Player player, String vote){
+		votes.put(player, vote);
+	}
+	
+	/**
 	 * Runs through the votes map and gets the option that has recieved the most
-	 * votes.
+	 * votes, and clears all votes.
 	 * 
 	 * @return the most voted-for option
 	 */

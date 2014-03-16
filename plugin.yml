@@ -1,4 +1,4 @@
-main: net.amoebaman.gamemaster.GameMaster
+main: net.amoebaman.gamemasterv3.GameMaster
 
 name: GameMaster
 version: 2.5
@@ -8,6 +8,7 @@ author: AmoebaMan
 description: Schedules and runs autonomous events/minigames
 
 commands:
+
   game:
     aliases: [g]
     description: Displays the status of the current game
@@ -29,14 +30,14 @@ commands:
     description: Fixes players stuck in blocks
     usage: /fixme
     
-  enter:
+  join:
     description: Enters the game
     usage: /enter
-  spectate:
+  watch:
     description: Enters spectation mode
     usage: /spectate
     permission: gamemaster.spectate
-  exit:
+  leave:
     description: Exits the game
     usage: /exit
     permission: gamemaster.exit
@@ -68,6 +69,9 @@ commands:
     permission: gamemaster.admin
   setfireworks:
     description: Sets the fireworks launch location
+    permission: gamemaster.admin
+  setwelcome:
+    description: Sets the welcome spawn location
     permission: gamemaster.admin
   changeteam:
     aliases: [change]

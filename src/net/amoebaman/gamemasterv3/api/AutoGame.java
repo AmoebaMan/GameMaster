@@ -1,5 +1,7 @@
 package net.amoebaman.gamemasterv3.api;
 
+import java.util.List;
+
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
@@ -57,6 +59,15 @@ public abstract class AutoGame{
 	 * @return the color the player's name should be
 	 */
 	public abstract ChatColor getColor(Player player);
+	
+	/**
+	 * Gets a list of messages that will be sent to players upon execution of the
+	 * /game command, in order to tell them the state of the game.
+	 * 
+	 * @param player a player
+	 * @return status messages
+	 */
+	public abstract List<Object> getStatusMessages(Player player);
 	
 	/**
 	 * Safely adds a player to the game, such as when they log in, or use the

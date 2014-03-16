@@ -1,9 +1,6 @@
 package net.amoebaman.gamemasterv3.api;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.bukkit.*;
 import org.bukkit.FireworkEffect.Type;
@@ -32,6 +29,24 @@ import net.amoebaman.utils.maps.PlayerMap;
 public abstract class TeamAutoGame extends AutoGame{
 	
 	private static boolean balance = true;
+	
+	/**
+	 * Gets whether or not team balancing is currently enabled.
+	 * 
+	 * @return whether team balancing is on
+	 */
+	public static boolean isBalancing(){
+		return balance;
+	}
+	
+	/**
+	 * Turns team balancing on or off.
+	 * 
+	 * @param whether team balancing should be on
+	 */
+	public static void setBalancing(boolean balance){
+		TeamAutoGame.balance = balance;
+	}
 	
 	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
 	private PlayerMap<Team> playerTeams = new PlayerMap<Team>();
@@ -246,6 +261,13 @@ public abstract class TeamAutoGame extends AutoGame{
 		return getTeam(player).chat;
 	}
 	
+	public List<Object> getStatusMessages(Player player){
+		List<Object> msgs = new ArrayList<Object>();
+		for(Team team : scores.keySet())
+			msgs.add(new Message(Scheme.NORMAL).t("The ").t(team).color(team.chat).t(" team has ").t(scores.get(team)).s().t(" points"));
+		return msgs;
+	}
+	
 	public void join(Player player){
 		if(getTeam(player) != null)
 			return;
@@ -277,14 +299,7 @@ public abstract class TeamAutoGame extends AutoGame{
 		/*
 		 * Broadcast
 		 */
-		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(
-			new Message(Scheme.HIGHLIGHT)
-			.t(getName().toUpperCase()).s()
-			.t(" is starting"),
-			new Message(Scheme.HIGHLIGHT)
-			.t(master.getActiveMap()).strong()
-			.t(" will be the battlefield")
-			)));
+		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(new Message(Scheme.HIGHLIGHT).t(getName().toUpperCase()).s().t(" is starting"), new Message(Scheme.HIGHLIGHT).t(master.getActiveMap()).strong().t(" will be the battlefield"))));
 		/*
 		 * Split up the teams
 		 */
