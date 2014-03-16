@@ -1,7 +1,7 @@
 main: net.amoebaman.gamemasterv3.GameMaster
 
 name: GameMaster
-version: 2.5
+version: 3.0
 depend: [KitMaster, StatMaster]
 loadbefore: [CommandBook]
 author: AmoebaMan
