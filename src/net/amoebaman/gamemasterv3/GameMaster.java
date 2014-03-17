@@ -28,10 +28,10 @@ import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
 import net.amoebaman.utils.CommandController;
-import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.S_Loc;
 import net.amoebaman.utils.maps.PlayerMap;
 import net.amoebaman.utils.maps.StringMap;
+import net.amoebaman.utils.nms.StatusBar;
 
 /**
  * The main class
@@ -71,9 +71,9 @@ public class GameMaster extends JavaPlugin{
 		/*
 		 * Establish files and folders
 		 */
-		configFile = GenUtil.getConfigFile(this, "config");
-		mapsFile = GenUtil.getConfigFile(this, "maps");
-		repairFile = GenUtil.getConfigFile(this, "repair");
+		configFile = new File(getDataFolder().getPath() + "/config.yml");
+		mapsFile = new File(getDataFolder().getPath() + "/maps.yml");
+		repairFile = new File(getDataFolder().getPath() + "/repair.yml");
 		/*
 		 * Load configs
 		 */
@@ -84,9 +84,15 @@ public class GameMaster extends JavaPlugin{
 			getConfig().options().pathSeparator('/');
 			getConfig().load(configFile);
 			
-			lobby = S_Loc.stringLoad(getConfig().getString("locations.lobby", "world@0.5,64,0,5"));
-			fireworks = S_Loc.stringLoad(getConfig().getString("locations.fireworks", S_Loc.stringSave(lobby, true, false)));
-			welcome = S_Loc.stringLoad(getConfig().getString("locations.welcome", S_Loc.stringSave(lobby, true, false)));
+			lobby = S_Loc.stringLoad(getConfig().getString("locations/lobby"));
+			if(lobby == null)
+				lobby = new Location(Bukkit.getWorlds().get(0), 0.5, 80, 0.5);
+			fireworks = S_Loc.stringLoad(getConfig().getString("locations/fireworks"));
+			if(fireworks == null)
+				fireworks = lobby.clone();
+			welcome = S_Loc.stringLoad(getConfig().getString("locations/welcome"));
+			if(welcome == null)
+				welcome = lobby.clone();
 			/*
 			 * The maps configuration
 			 */
@@ -97,7 +103,7 @@ public class GameMaster extends JavaPlugin{
 				ConfigurationSection sec = mapsYaml.getConfigurationSection(key);
 				GameMap map = new GameMap(key);
 				for(String prop : sec.getKeys(true))
-					if(!sec.isColor(prop))
+					if(!sec.isConfigurationSection(prop))
 						map.getProperties().set(prop, sec.get(prop));
 				registerMap(map);
 			}
@@ -162,12 +168,17 @@ public class GameMaster extends JavaPlugin{
 		 */
 		Bukkit.getScheduler().cancelTask(tickTaskId);
 		/*
+		 * Remove all status bars
+		 */
+		StatusBar.removeAllStatusBars();
+		/*
 		 * Save the configs
 		 */
 		try{
-			getConfig().set("locations.lobby", S_Loc.stringSave(lobby, true, true));
-			getConfig().set("locations.fireworks", S_Loc.stringSave(lobby, true, false));
-			getConfig().set("locations.welcome", S_Loc.stringSave(welcome, true, true));
+			getConfig().set("locations/lobby", S_Loc.stringSave(lobby, true, true));
+			getConfig().set("locations/fireworks", S_Loc.stringSave(lobby, true, false));
+			getConfig().set("locations/welcome", S_Loc.stringSave(welcome, true, true));
+			getConfig().save(configFile);
 			
 			YamlConfiguration mapYaml = new YamlConfiguration();
 			mapYaml.options().pathSeparator('/');
@@ -349,11 +360,14 @@ public class GameMaster extends JavaPlugin{
 		 * Restore all the blocks listed in the repair log
 		 */
 		for(String key : repairYaml.getKeys(false)){
-			Block block = S_Loc.stringLoad(key).getBlock();
-			String[] split = repairYaml.getString(key).split(":");
-			if(block.getType() == Material.CHEST)
-				((Chest) block.getState()).getBlockInventory().clear();
-			block.setTypeIdAndData(Integer.parseInt(split[0]), Byte.parseByte(split[1]), false);
+			Location loc = S_Loc.stringLoad(key);
+			if(loc != null){
+				Block block = S_Loc.stringLoad(key).getBlock();
+				String[] split = repairYaml.getString(key).split(":");
+				if(block.getType() == Material.CHEST)
+					((Chest) block.getState()).getBlockInventory().clear();
+				block.setTypeIdAndData(Integer.parseInt(split[0]), Byte.parseByte(split[1]), false);
+			}
 		}
 	}
 	
