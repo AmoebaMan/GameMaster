@@ -440,4 +440,9 @@ public class EventListener implements Listener{
 				}
 	}
 	
+	@EventHandler
+	public void logPlayerMoves(PlayerMoveEvent event){
+		master.getPlayerManager().stampMovement(event.getPlayer());
+	}
+	
 }

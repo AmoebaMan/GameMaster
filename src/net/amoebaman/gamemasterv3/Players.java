@@ -23,6 +23,7 @@ public class Players implements Listener{
 	
 	private PlayerMap<String> lastDamager = new PlayerMap<String>("");
 	private PlayerMap<Long> lastDamageTime = new PlayerMap<Long>(0L);
+	private PlayerMap<Long> lastMovementTime = new PlayerMap<Long>(0L);
 	private Set<Player> respawning = new HashSet<Player>();
 	
 	private GameMaster master;
@@ -133,13 +134,32 @@ public class Players implements Listener{
 		player.setPlayerListName(colorName);
 	}
 	
+	/**
+	 * Checks whether a player is currently respawning, if the current game uses
+	 * the master respawning system.
+	 * 
+	 * @param player a player
+	 * @return true if the player is respawning using the master system, false otherwise
+	 */
 	public boolean isRespawning(Player player){
 		return respawning.contains(player);
 	}
 	
-	public void toggleRespawning(Player player){
+	protected void toggleRespawning(Player player){
 		if(!respawning.remove(player))
 			respawning.add(player);
+	}
+
+	protected void stampMovement(Player player){
+		lastMovementTime.put(player, System.currentTimeMillis());
+	}
+	
+	protected long getTimeSinceLastMovement(Player player){
+		long stamp = lastMovementTime.get(player);
+		if(stamp == 0)
+			return 0;
+		else
+			return System.currentTimeMillis() - stamp;
 	}
 	
 }

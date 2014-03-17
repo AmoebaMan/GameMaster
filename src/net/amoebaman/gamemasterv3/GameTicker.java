@@ -134,7 +134,8 @@ public class GameTicker implements Runnable{
 		 * Kick AFK suckers
 		 */
 		for(Player player : master.getPlayers())
-			; //TODO implement
+			if(master.getPlayerManager().getTimeSinceLastMovement(player) > 5 * 60 * 1000)
+				player.kickPlayer("You've been AFK for too long (5 minutes)");
 		/*
 		 * Turn off the debug cycle
 		 */
