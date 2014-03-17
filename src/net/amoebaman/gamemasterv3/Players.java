@@ -128,7 +128,7 @@ public class Players implements Listener{
 		if(master.getState() != GameState.INTERMISSION){
 			ChatColor c = master.getActiveGame().getColor(player);
 			if(c != null)
-				colorName = c + player.getName();
+				colorName = c + player.getName() + ChatColor.RESET;
 		}
 		player.setDisplayName(colorName);
 		player.setPlayerListName(colorName);
