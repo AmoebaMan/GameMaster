@@ -86,37 +86,62 @@ public class CommandListener{
 	public Object voteCmd(Player player, String[] args){
 		if(master.getState() == GameState.INTERMISSION){
 			if(master.getActiveGame() == null){
-				if(master.getGames().size() < 2)
-					return new Message(Scheme.ERROR).then("There aren't any games to vote for");
+				/*
+				 * Get the game they voted for
+				 */
 				AutoGame game = args.length > 0 ? master.getGame(args[0]) : null;
+				/*
+				 * List the available games if they haven't chosen one
+				 */
 				if(game == null){
 					List<Message> list = Lists.newArrayList(new Message(Scheme.NORMAL).then("Click to vote for a game:"));
 					for(AutoGame each : master.getGames())
 						list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
 					return list;
 				}
+				/*
+				 * Don't allow votes for recently-played games
+				 */
 				if(master.getProgression().getGameHistory().contains(game))
 					return new Message(Scheme.ERROR).then(game).strong().then(" has played recently, choose a different game");
+				/*
+				 * Log the vote
+				 */
 				master.logVote(player, game.getName());
 				return new Message(Scheme.NORMAL).then("You voted for ").then(game).strong().then(" for the next game");
 			}
 			else if(master.getActiveMap() == null){
+				/*
+				 * Get the map they voted for
+				 */
 				GameMap map = args.length > 0 ? master.getMap(args[0]) : null;
+				/*
+				 * List the available maps if they haven't chosen one
+				 */
 				if(map == null){
 					List<Message> list = Lists.newArrayList(new Message(Scheme.NORMAL).then("Click to vote for a map:"));
 					for(GameMap each : master.getMaps(master.getActiveGame()))
 						list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
 					return list;
 				}
+				/*
+				 * Don't allow votes for non-compatible maps
+				 */
 				if(!master.getActiveGame().isCompatible(map))
 					return new Message(Scheme.ERROR).then(master.getActiveGame()).strong().then(" can't be played on ").then(map).strong();
+				/*
+				 * Don't allow votes for recently-played maps
+				 */
 				if(master.getProgression().getMapHistory().contains(map))
 					return new Message(Scheme.ERROR).then(map).strong().then(" has played recently, choose a different game");
+				/*
+				 * Log the vote
+				 */
 				master.logVote(player, map.getName());
 				return new Message(Scheme.NORMAL).then("You voted for ").then(map).strong().then(" for the next map");
 			}
 			else
-				return new Message(Scheme.ERROR).then("The next game and map have already been decided upon");
+				return new Message(Scheme.ERROR).then("The next game and map have already been chosen");
 		}
 		else
 			return new Message(Scheme.ERROR).then("You can only vote on games and maps during the intermission");
@@ -264,27 +289,27 @@ public class CommandListener{
 	public Object enterCmd(Player player, String[] args){
 		if(master.getState(player) != PlayerState.PLAYING){
 			master.setState(player, PlayerState.PLAYING);
-			return new Message(Scheme.NORMAL).t("You have entered the game");
+			return new Message(Scheme.NORMAL).t("You have join the games");
 		}
-		return new Message(Scheme.NORMAL).t("You are already in the game");
+		return new Message(Scheme.NORMAL).t("You're already in the games");
 	}
 	
 	@CommandHandler(cmd = "watch")
 	public Object spectateCmd(Player player, String[] args){
 		if(master.getState(player) != PlayerState.WATCHING){
 			master.setState(player, PlayerState.WATCHING);
-			return new Message(Scheme.HIGHLIGHT).t("You are spectating the game");
+			return new Message(Scheme.HIGHLIGHT).t("You are watching the game");
 		}
-		return new Message(Scheme.NORMAL).t("You are already spectating the game");
+		return new Message(Scheme.NORMAL).t("You're already watching the game");
 	}
 	
 	@CommandHandler(cmd = "leave")
 	public Object exitCmd(Player player, String[] args){
 		if(master.getState(player) != PlayerState.EXTERIOR){
 			master.setState(player, PlayerState.EXTERIOR);
-			return new Message(Scheme.NORMAL).t("You have exited the game");
+			return new Message(Scheme.NORMAL).t("You have left the game");
 		}
-		return new Message(Scheme.NORMAL).t("You were not in the game");
+		return new Message(Scheme.NORMAL).t("You weren't in the game");
 	}
 	
 	@CommandHandler(cmd = "setlobby")
@@ -428,7 +453,7 @@ public class CommandListener{
 				ConfigurationSection sec = prop.getConfigurationSection(key);
 				for(String subKey : sec.getKeys(true))
 					if(!sec.isConfigurationSection(subKey))
-						list.add(new Message(Scheme.NORMAL).t(subKey).s().t(sec.get(subKey)));
+						list.add(new Message(Scheme.NORMAL).t(subKey + ": ").s().t(sec.get(subKey)));
 			}
 			else
 				list.add(new Message(Scheme.NORMAL).t(key).s().t(prop.get(key)));
@@ -438,13 +463,23 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "game-map list")
 	public Object mapListCmd(CommandSender sender, String[] args){
-		new Message(Scheme.NORMAL).t("Maps: ").s().t(Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps()), "&z", "&x, &z", ""), Scheme.NORMAL));
+		new Message(Scheme.NORMAL)
+			.t("Maps: ").s()
+			.t(Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps()), "&x", "&z, &x", ""), Scheme.NORMAL))
+			.send(sender);
 		if(master.getEditMap() != null)
-			new Message(Scheme.NORMAL).t("Editing: ").s().t(master.getEditMap());
+			new Message(Scheme.NORMAL)
+				.t("Editing: ").s()
+				.t(master.getEditMap())
+				.send(sender);
 		if(args.length > 0){
 			AutoGame game = master.getGame(args[0]);
 			if(game != null)
-				new Message(Scheme.NORMAL).t("Compatible with " + game + ": ").s().t(Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps(game)), "&z", "&x, &z", ""), Scheme.NORMAL));
+				new Message(Scheme.NORMAL)
+					.t("Compatible with ")
+					.t(game).s()
+					.t(": " + Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps(game)), "&x", "&z, &x", ""), Scheme.NORMAL))
+					.send(sender);
 		}
 		return null;
 	}
