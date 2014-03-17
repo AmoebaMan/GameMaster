@@ -70,6 +70,10 @@ public class Progression{
 	
 	public void intermission(){
 		/*
+		 * Start intermission phase
+		 */
+		master.setState(GameState.INTERMISSION);
+		/*
 		 * Save the server
 		 */
 		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "save-all");
@@ -186,7 +190,14 @@ public class Progression{
 		/*
 		 * Broadcast
 		 */
-		Chat.broadcast(new Message(Scheme.HIGHLIGHT).t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().t(" will start in ").t((intermission - gameVoting) + " seconds").s(), new Message(Scheme.HIGHLIGHT).t("Prepare for battle"));
+		Chat.broadcast(
+			new Message(Scheme.HIGHLIGHT)
+				.t(master.getActiveGame()).s()
+				.t(" on ").t(master.getActiveMap()).s()
+				.t(" will start in ")
+				.t((intermission - gameVoting - mapVoting) + " seconds").s(),
+			new Message(Scheme.HIGHLIGHT)
+				.t("Prepare for battle"));
 		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
 			
 			public void run(){
