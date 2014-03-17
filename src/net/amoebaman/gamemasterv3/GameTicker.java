@@ -109,7 +109,7 @@ public class GameTicker implements Runnable{
 		else
 			if(master.getState() == GameState.INTERMISSION){
 				Message status = new Message(Scheme.HIGHLIGHT)
-					.t("Intermission ").s()
+					.t("Intermission").s()
 					.t(" - waiting to play ");
 				if(master.getActiveGame() != null){
 					status.t(master.getActiveGame()).s();
