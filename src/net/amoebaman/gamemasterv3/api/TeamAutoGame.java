@@ -49,8 +49,7 @@ public abstract class TeamAutoGame extends AutoGame{
 	}
 	
 	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
-	private PlayerMap<Team> playerTeams = new PlayerMap<Team>();
-	private DefaultedMap<Team, Set<Player>> teamPlayers = new DefaultedMap<Team, Set<Player>>();
+	private PlayerMap<Team> teams = new PlayerMap<Team>();
 	
 	/**
 	 * Team games have a basic requirement that game maps have defined the teams
@@ -94,7 +93,7 @@ public abstract class TeamAutoGame extends AutoGame{
 	}
 	
 	public Team getTeam(Player player){
-		return playerTeams.get(player);
+		return teams.get(player);
 	}
 	
 	/**
@@ -104,14 +103,10 @@ public abstract class TeamAutoGame extends AutoGame{
 	 * @param team a team
 	 */
 	public void setTeam(Player player, Team team){
-		if(teamPlayers.containsKey(getTeam(player)))
-			teamPlayers.get(getTeam(player).name()).remove(player);
 		if(team == null)
-			playerTeams.remove(player);
-		else{
-			playerTeams.put(player, team);
-			teamPlayers.get(team.name()).add(player);
-		}
+			teams.remove(player);
+		else
+			teams.put(player, team);
 	}
 	
 	/**
@@ -121,9 +116,11 @@ public abstract class TeamAutoGame extends AutoGame{
 	 * @return all players on the team
 	 */
 	public Set<Player> getPlayers(Team team){
-		if(!teamPlayers.containsKey(team))
-			teamPlayers.put(team, new LinkedHashSet<Player>());
-		return new HashSet(teamPlayers.get(team.name()));
+		Set<Player> set = new HashSet<Player>();
+		for(Player each : master.getPlayers())
+			if(getTeam(each) == team)
+				set.add(each);
+		return set;
 	}
 	
 	/**
@@ -256,7 +253,7 @@ public abstract class TeamAutoGame extends AutoGame{
 	}
 	
 	public ChatColor getColor(Player player){
-		if(!playerTeams.containsKey(player))
+		if(!teams.containsKey(player))
 			return null;
 		return getTeam(player).chat;
 	}
