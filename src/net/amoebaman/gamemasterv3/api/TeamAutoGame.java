@@ -316,13 +316,16 @@ public abstract class TeamAutoGame extends AutoGame{
 		new Message(Scheme.ERROR).t("The game was aborted by an operator").broadcast();
 	}
 	
-	public int getGameLength(){
-		return 15;
-	}
-	
-	public void end(){
+	/**
+	 * Gets who should win the game, if the game was ended right now. By default
+	 * this is just evaluated on a "who has the most points" basis. Override to
+	 * change the behavior.
+	 * 
+	 * @return the winner
+	 */
+	public Team getWinner(){
 		/*
-		 * Determine who actually won the game
+		 * Basic "max score wins" calculation
 		 */
 		Team winner = null;
 		int maxScore = 0;
@@ -335,6 +338,26 @@ public abstract class TeamAutoGame extends AutoGame{
 				if(getScore(team) == maxScore)
 					winner = Team.NEUTRAL;
 		}
+		return winner;
+	}
+	
+	/**
+	 * Ends the game, with the winning team designated by {@link #getWinner()}.
+	 */
+	public void end(){
+		end(getWinner());
+	}
+	
+	/**
+	 * Ends the game with the designated team as the winner. Each player on the
+	 * winning team is awarded half a charge, and their wins stat is
+	 * incremented. Each member of the losing teams have their losses stat
+	 * incremented. Fireworks of the winning team's color are launched from
+	 * the fireworks launch position designated by the master.
+	 * 
+	 * @param winner the winning team
+	 */
+	public void end(Team winner){
 		/*
 		 * Null winners are draws, change that to the neutral team to avoid
 		 * obnoxious NPEs
@@ -394,6 +417,10 @@ public abstract class TeamAutoGame extends AutoGame{
 				master.endGame();
 			}
 		}, 100);
+	}
+	
+	public int getGameLength(){
+		return 15;
 	}
 	
 	public int getSafeRadius(Player player){

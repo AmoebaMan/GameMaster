@@ -4,28 +4,31 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import net.amoebaman.gamemasterv3.GameMaster;
+import net.amoebaman.gamemasterv3.enums.GameState;
 
 /**
  * Represents a game that the game master can run automatically.
  * 
  * @author AmoebaMan
  */
-public abstract class AutoGame{
+public abstract class AutoGame extends JavaPlugin{
 	
-	protected GameMaster master;
+	public GameMaster master;
 	
 	public void register(){
 		master = GameMaster.getMaster().registerGame(this);
 	}
 	
-	/**
-	 * Gets the name of the game, in a nice, presentable form.
-	 * 
-	 * @return the name
-	 */
-	public abstract String getName();
+	public String toString(){
+		return getName().replaceAll("[-_]", " ");
+	}
+	
+	public boolean isActive(){
+		return master.getState() == GameState.RUNNING && equals(master.getActiveGame());
+	}
 	
 	/**
 	 * Gets a set of aliases that this game can also be referrenced by. These
