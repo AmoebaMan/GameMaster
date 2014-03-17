@@ -35,7 +35,7 @@ public class GameMap{
 		properties.set("capacity/min", 2);
 		properties.set("capacity/max", 32);
 		properties.set("atmos/time", "none");
-		properties.set("atmos/weather", 32);
+		properties.set("atmos/weather", "none");
 	}
 	
 	/**
