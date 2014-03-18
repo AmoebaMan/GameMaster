@@ -70,7 +70,8 @@ public class GameTicker implements Runnable{
 								new Message(Scheme.WARNING)
 								.t("You can't re-enter spawn for ")
 								.t(game.getSafeReentryTimeout(p) - timeDiff / 1000).s()
-								.t(" more seconds");
+								.t(" more seconds")
+								.send(p);
 							}
 							else
 								p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 35, 6), true);
@@ -134,8 +135,10 @@ public class GameTicker implements Runnable{
 		 * Kick AFK suckers
 		 */
 		for(Player player : master.getPlayers())
-			if(master.getPlayerManager().getTimeSinceLastMovement(player) > 5 * 60 * 1000)
+			if(master.getPlayerManager().getTimeSinceLastMovement(player) > 5 * 60 * 1000){
 				player.kickPlayer("You've been AFK for too long (5 minutes)");
+				master.getPlayerManager().resetMovementStamp(player);
+			}
 		/*
 		 * Turn off the debug cycle
 		 */

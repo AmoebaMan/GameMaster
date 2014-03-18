@@ -143,10 +143,11 @@ public class GameMaster extends JavaPlugin{
 		 */
 		Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
 		Objective health = board.getObjective("health");
-		if(health == null)
+		if(health == null){
 			health = board.registerNewObjective("health", Criterias.HEALTH);
-		health.setDisplaySlot(DisplaySlot.BELOW_NAME);
-		health.setDisplayName(" HP");
+			health.setDisplaySlot(DisplaySlot.BELOW_NAME);
+			health.setDisplayName("HP");
+		}
 		/*
 		 * Set up components
 		 */
@@ -205,11 +206,11 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	protected Collection<AutoGame> getGames(){
-		return games.values();
+		return new HashSet(games.values());
 	}
 	
 	protected Collection<GameMap> getMaps(){
-		return maps.values();
+		return new HashSet(maps.values());
 	}
 	
 	/**
@@ -222,6 +223,8 @@ public class GameMaster extends JavaPlugin{
 	public GameMaster registerGame(AutoGame game){
 		if(game != null){
 			games.put(game.getName(), game);
+			for(String alias : game.getAliases())
+				games.put(alias, game);
 			getLogger().info("Loaded auto game named " + game.getName());
 		}
 		else
@@ -464,6 +467,10 @@ public class GameMaster extends JavaPlugin{
 			player.setGameMode(GameMode.SURVIVAL);
 		if(newState == PlayerState.WATCHING)
 			player.setGameMode(GameMode.CREATIVE);
+		/*
+		 * Update colors
+		 */
+		playerManager.updateColors(player);
 	}
 	
 	/**

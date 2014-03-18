@@ -54,6 +54,10 @@ public class GameMap{
 	 * This instance is mutable. Changing it will change the map's internal data
 	 * as well. That said, maps themselves are immutable - changing the map's
 	 * data will not change the map on record unless you forcibly re-save it.
+	 * <p>
+	 * <b>IMPORTANT:</b> The internal memory configuration uses '/' as its path
+	 * separator character instead of '.', making it safe to use decimal numbers
+	 * as keys.
 	 * 
 	 * @return the map's properties
 	 */

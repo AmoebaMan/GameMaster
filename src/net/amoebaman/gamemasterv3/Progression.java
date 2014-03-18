@@ -9,7 +9,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
-import org.kitteh.tag.TagAPI;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.GameMap;
@@ -20,7 +19,6 @@ import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.Chat;
 import net.amoebaman.utils.chat.Message;
 import net.amoebaman.utils.chat.Scheme;
-
 
 public class Progression{
 	
@@ -120,6 +118,8 @@ public class Progression{
 				mapHistory.poll();
 			master.setActiveGame(null);
 			master.setActiveMap(null);
+			forcedNextGame = null;
+			forcedNextMap = null;
 		}
 		/*
 		 * Broadcast status
@@ -177,7 +177,7 @@ public class Progression{
 		 */
 		GameMap mostVoted = master.getMap(master.getMostVoted());
 		if(mostVoted == null){
-			master.setActiveMap(GenUtil.getRandomElement(master.getMaps()));
+			master.setActiveMap(GenUtil.getRandomElement(master.getMaps(master.getActiveGame())));
 			new Message(Scheme.HIGHLIGHT).then("No votes were cast - randomly choosing a map").broadcast();
 		}
 		else
@@ -216,18 +216,6 @@ public class Progression{
 		 */
 		master.getActiveGame().start();
 		master.stampGameStart();
-		/*
-		 * Reset player tags a second later to prevent invisi-glitches
-		 */
-		Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
-			
-			public void run(){
-				
-				for(Player player : master.getPlayers())
-					TagAPI.refreshPlayer(player);
-				
-			}
-		}, 20);
 	}
 	
 }

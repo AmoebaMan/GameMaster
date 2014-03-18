@@ -1,6 +1,9 @@
 package net.amoebaman.gamemasterv3.api;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.bukkit.*;
 import org.bukkit.FireworkEffect.Type;
@@ -9,9 +12,14 @@ import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
-import org.kitteh.tag.TagAPI;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
 
 import net.amoebaman.gamemasterv3.enums.Team;
+import net.amoebaman.gamemasterv3.modules.RespawnModule;
+import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
+import net.amoebaman.gamemasterv3.modules.TimerModule;
 import net.amoebaman.gamemasterv3.util.Utils;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
@@ -39,6 +47,9 @@ public abstract class TeamAutoGame extends AutoGame{
 		return balance;
 	}
 	
+	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
+	private PlayerMap<Team> teams = new PlayerMap<Team>();
+	
 	/**
 	 * Turns team balancing on or off.
 	 * 
@@ -48,8 +59,19 @@ public abstract class TeamAutoGame extends AutoGame{
 		TeamAutoGame.balance = balance;
 	}
 	
-	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
-	private PlayerMap<Team> teams = new PlayerMap<Team>();
+	public static Scoreboard getBoard(){
+		return Bukkit.getScoreboardManager().getMainScoreboard();
+	}
+	
+	public static Objective getScoreObj(){
+		Objective score = getBoard().getObjective("score");
+		if(score == null){
+			score = getBoard().registerNewObjective("score", "dummy");
+			score.setDisplayName(ChatColor.DARK_GRAY + " -=[ " + ChatColor.GOLD + "SCORE" + ChatColor.DARK_GRAY + " ]=- ");
+			score.setDisplaySlot(DisplaySlot.SIDEBAR);
+		}
+		return score;
+	}
 	
 	/**
 	 * Team games have a basic requirement that game maps have defined the teams
@@ -103,10 +125,16 @@ public abstract class TeamAutoGame extends AutoGame{
 	 * @param team a team
 	 */
 	public void setTeam(Player player, Team team){
-		if(team == null)
+		if(team == null){
 			teams.remove(player);
-		else
+			org.bukkit.scoreboard.Team bTeam = getBoard().getPlayerTeam(player);
+			if(bTeam != null)
+				bTeam.removePlayer(player);
+		}
+		else{
 			teams.put(player, team);
+			team.getBukkitTeam().addPlayer(player);
+		}
 	}
 	
 	/**
@@ -141,6 +169,7 @@ public abstract class TeamAutoGame extends AutoGame{
 	 */
 	public void setScore(Team team, int newScore){
 		scores.put(team, newScore);
+		getScoreObj().getScore(Bukkit.getOfflinePlayer(team.getBukkitTeam().getDisplayName())).setScore(newScore);
 	}
 	
 	/**
@@ -157,7 +186,6 @@ public abstract class TeamAutoGame extends AutoGame{
 		setTeam(player, newTeam);
 		player.teleport(getRespawnLoc(player));
 		master.getPlayerManager().destamp(player);
-		TagAPI.refreshPlayer(player);
 	}
 	
 	/**
@@ -258,9 +286,9 @@ public abstract class TeamAutoGame extends AutoGame{
 		return getTeam(player).chat;
 	}
 	
-	public List<Object> getStatusMessages(Player player){
+	public List<?> getStatusMessages(Player player){
 		List<Object> msgs = new ArrayList<Object>();
-		for(Team team : scores.keySet())
+		for(Team team : getActiveTeams(master.getActiveMap()))
 			msgs.add(new Message(Scheme.NORMAL).t("The ").t(team).color(team.chat).t(" team has ").t(scores.get(team)).s().t(" points"));
 		return msgs;
 	}
@@ -416,30 +444,58 @@ public abstract class TeamAutoGame extends AutoGame{
 		}, 100);
 	}
 	
+	/**
+	 * General-case implementation of {@link TimerModule#getGameLength()}.
+	 * Returns 15 minutes.
+	 */
 	public int getGameLength(){
 		return 15;
 	}
 	
+	/**
+	 * General-case implementation of
+	 * {@link SafeSpawnModule#getSafeRadius(Player)}. Returns 5 meters.
+	 */
 	public int getSafeRadius(Player player){
 		return 5;
 	}
 	
+	/**
+	 * General-case implementation of
+	 * {@link SafeSpawnModule#getSafeReentryTimeout(Player)}. Returns 5 seconds.
+	 */
 	public int getSafeReentryTimeout(Player player){
 		return 10;
 	}
 	
+	/**
+	 * General-case implementation of {@link SafeSpawnModule#getSafeLoc(Player)}
+	 * . Returns the player's respawn location.
+	 */
 	public Location getSafeLoc(Player player){
 		return getRespawnLoc(player);
 	}
 	
+	/**
+	 * General-case implementation of
+	 * {@link RespawnModule#getRespawnDelay(Player)}. Returns 10 seconds.
+	 */
 	public int getRespawnDelay(Player player){
 		return 10;
 	}
 	
+	/**
+	 * General-case implementation of
+	 * {@link RespawnModule#getWaitingLoc(Player)}. Returns the master lobby.
+	 */
 	public Location getWaitingLoc(Player player){
 		return master.getLobby();
 	}
 	
+	/**
+	 * General-case implementation of
+	 * {@link RespawnModule#getRespawnInvuln(Player)}. Returns 5 seconds.
+	 */
 	public int getRespawnInvuln(Player player){
 		return 5;
 	}

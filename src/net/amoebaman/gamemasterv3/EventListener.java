@@ -109,7 +109,7 @@ public class EventListener implements Listener{
 			event.setCancelled(true);
 	}
 	
-	@EventHandler
+	@EventHandler(priority = EventPriority.LOWEST)
 	public void entityDamageModify(final EntityDamageEvent event){
 		/*
 		 * Determine the victim (we consider wolves part of their owners)
@@ -153,6 +153,8 @@ public class EventListener implements Listener{
 				culprit = (Player) ((Projectile) damager).getShooter();
 			if(damager instanceof Tameable && ((Tameable) damager).getOwner() instanceof Player)
 				culprit = (Player) ((Tameable) damager).getOwner();
+			if(culprit == null)
+				return;
 			/*
 			 * Remember kids, friendly fire isn't!
 			 */
@@ -178,7 +180,8 @@ public class EventListener implements Listener{
 			/*
 			 * Stamp the damage
 			 */
-			master.getPlayerManager().stampDamage(victim, culprit);
+			if(!event.isCancelled())
+				master.getPlayerManager().stampDamage(victim, culprit);
 			/*
 			 * Modify the damage to put the true source on record
 			 */
@@ -280,6 +283,10 @@ public class EventListener implements Listener{
 		 */
 		if(master.getState(player) == PlayerState.PLAYING){
 			/*
+			 * Destamp the player
+			 */
+			master.getPlayerManager().destamp(player);
+			/*
 			 * If it's the intermission, send them to the lobby
 			 */
 			if(master.getState() == GameState.INTERMISSION)
@@ -371,7 +378,7 @@ public class EventListener implements Listener{
 			}
 	}
 	
-	@EventHandler(priority=EventPriority.HIGHEST)
+	@EventHandler(priority=EventPriority.MONITOR)
 	public void teamChat(AsyncPlayerChatEvent event){
 		Player player = event.getPlayer();
 		if(teamChatting.contains(player) && master.getState(player) == PlayerState.PLAYING && master.getState() != GameState.INTERMISSION && master.getActiveGame() instanceof TeamAutoGame){
@@ -443,6 +450,12 @@ public class EventListener implements Listener{
 	@EventHandler
 	public void logPlayerMoves(PlayerMoveEvent event){
 		master.getPlayerManager().stampMovement(event.getPlayer());
+	}
+	
+	@EventHandler
+	public void dontDropItems(PlayerDeathEvent event){
+		if(master.getState(event.getEntity()) == PlayerState.PLAYING)
+			event.getDrops().clear();
 	}
 	
 }

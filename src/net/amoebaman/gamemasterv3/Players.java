@@ -8,10 +8,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.potion.PotionEffect;
-import org.kitteh.tag.TagAPI;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
+import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.utils.maps.PlayerMap;
 
 /**
@@ -110,7 +110,6 @@ public class Players implements Listener{
 		 * Reset display properties
 		 */
 		updateColors(player);
-		TagAPI.refreshPlayer(player);
 		/*
 		 * Reset recorded player stats
 		 */
@@ -125,13 +124,12 @@ public class Players implements Listener{
 	 */
 	public void updateColors(Player player){
 		String colorName = player.getName();
-		if(master.getState() != GameState.INTERMISSION){
+		if(master.getState() != GameState.INTERMISSION && master.getState(player) == PlayerState.PLAYING){
 			ChatColor c = master.getActiveGame().getColor(player);
 			if(c != null)
 				colorName = c + player.getName() + ChatColor.RESET;
 		}
 		player.setDisplayName(colorName);
-		player.setPlayerListName(colorName);
 	}
 	
 	/**
@@ -160,6 +158,10 @@ public class Players implements Listener{
 			return 0;
 		else
 			return System.currentTimeMillis() - stamp;
+	}
+	
+	protected void resetMovementStamp(Player player){
+		lastMovementTime.remove(player);
 	}
 	
 }
