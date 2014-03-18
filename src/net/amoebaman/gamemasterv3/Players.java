@@ -115,6 +115,8 @@ public class Players implements Listener{
 		 */
 		lastDamager.remove(player);
 		lastDamageTime.remove(player);
+		lastMovementTime.remove(player);
+		respawning.remove(player);
 	}
 	
 	/**
