@@ -257,7 +257,7 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "changeteam")
 	public Object changeteamCmd(CommandSender sender, String[] args){
-		if(master.getState() != GameState.INTERMISSION)
+		if(master.getState() == GameState.INTERMISSION)
 			return new Message(Scheme.ERROR).t("There isn't a game running");
 		if(!(master.getActiveGame() instanceof TeamAutoGame))
 			return new Message(Scheme.ERROR).t("This isn't a team game");
@@ -286,30 +286,30 @@ public class CommandListener{
 	}
 	
 	@CommandHandler(cmd = "join")
-	public Object enterCmd(Player player, String[] args){
+	public Object joinCmd(Player player, String[] args){
 		if(master.getState(player) != PlayerState.PLAYING){
 			master.setState(player, PlayerState.PLAYING);
-			return new Message(Scheme.NORMAL).t("You have join the games");
+			return new Message(Scheme.NORMAL).t("You have joined the games");
 		}
 		return new Message(Scheme.NORMAL).t("You're already in the games");
 	}
 	
 	@CommandHandler(cmd = "watch")
-	public Object spectateCmd(Player player, String[] args){
+	public Object watchCmd(Player player, String[] args){
 		if(master.getState(player) != PlayerState.WATCHING){
 			master.setState(player, PlayerState.WATCHING);
-			return new Message(Scheme.HIGHLIGHT).t("You are watching the game");
+			return new Message(Scheme.HIGHLIGHT).t("You are watching the games");
 		}
-		return new Message(Scheme.NORMAL).t("You're already watching the game");
+		return new Message(Scheme.NORMAL).t("You're already watching the games");
 	}
 	
 	@CommandHandler(cmd = "leave")
-	public Object exitCmd(Player player, String[] args){
+	public Object leaveCmd(Player player, String[] args){
 		if(master.getState(player) != PlayerState.EXTERIOR){
 			master.setState(player, PlayerState.EXTERIOR);
-			return new Message(Scheme.NORMAL).t("You have left the game");
+			return new Message(Scheme.NORMAL).t("You have left the games");
 		}
-		return new Message(Scheme.NORMAL).t("You weren't in the game");
+		return new Message(Scheme.NORMAL).t("You weren't in the games");
 	}
 	
 	@CommandHandler(cmd = "setlobby")
