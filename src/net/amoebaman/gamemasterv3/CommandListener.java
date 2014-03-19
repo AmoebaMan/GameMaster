@@ -50,33 +50,22 @@ public class CommandListener{
 		if(master.getState() == GameState.INTERMISSION)
 			return new Message(Scheme.ERROR).then("There isn't a game running");
 		
-		Player player = sender instanceof Player? (Player) sender : null;
+		Player player = sender instanceof Player ? (Player) sender : null;
 		
-		List<Object> status = Lists.newArrayList(
-			(Object) new Message(Scheme.HIGHLIGHT)
-				.t("Currently playing ")
-				.t(master.getActiveGame()).s()
-				.t(" on ")
-				.t(master.getActiveMap()).s()
-		);
+		List<Object> status = Lists.newArrayList((Object) new Message(Scheme.HIGHLIGHT).t("Currently playing ").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s());
 		
 		if(master.getActiveGame() instanceof TeamAutoGame && player != null && master.getState(player) == PlayerState.PLAYING){
 			Team team = ((TeamAutoGame) master.getActiveGame()).getTeam(player);
-			status.add(
-				new Message(Scheme.HIGHLIGHT)
-					.t("You are on the ")
-					.t(team).color(team.chat)
-					.t(" team")
-					.toString());
+			status.add(new Message(Scheme.HIGHLIGHT).t("You are on the ").t(team).color(team.chat).t(" team").toString());
 		}
 		
 		status.addAll(master.getActiveGame().getStatusMessages(player));
-
+		
 		if(master.getActiveGame() instanceof TimerModule){
 			long millis = ((TimerModule) master.getActiveGame()).getGameLength() * 60 * 1000 - (System.currentTimeMillis() - master.getGameStart());
 			int seconds = Math.round(millis / 1000F);
 			int mins = seconds / 60;
-			status.add(new Message(Scheme.NORMAL).then(mins).strong().then(" minutes and ").then(seconds%60).strong().then(" seconds remain").toString());
+			status.add(new Message(Scheme.NORMAL).then(mins).strong().then(" minutes and ").then(seconds % 60).strong().then(" seconds remain").toString());
 		}
 		
 		return Align.addSpacers("", Align.center(status));
@@ -84,12 +73,15 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "vote")
 	public Object voteCmd(Player player, String[] args){
+		
+		String vote = GenUtil.concat(Lists.newArrayList(args), "", " ", "");
+		
 		if(master.getState() == GameState.INTERMISSION){
 			if(master.getActiveGame() == null){
 				/*
 				 * Get the game they voted for
 				 */
-				AutoGame game = args.length > 0 ? master.getGame(args[0]) : null;
+				AutoGame game = !vote.isEmpty() ? master.getGame(vote) : null;
 				/*
 				 * List the available games if they haven't chosen one
 				 */
@@ -110,38 +102,39 @@ public class CommandListener{
 				master.logVote(player, game.getName());
 				return new Message(Scheme.NORMAL).then("You voted for ").then(game).strong().then(" for the next game");
 			}
-			else if(master.getActiveMap() == null){
-				/*
-				 * Get the map they voted for
-				 */
-				GameMap map = args.length > 0 ? master.getMap(args[0]) : null;
-				/*
-				 * List the available maps if they haven't chosen one
-				 */
-				if(map == null){
-					List<Message> list = Lists.newArrayList(new Message(Scheme.NORMAL).then("Click to vote for a map:"));
-					for(GameMap each : master.getMaps(master.getActiveGame()))
-						list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
-					return list;
-				}
-				/*
-				 * Don't allow votes for non-compatible maps
-				 */
-				if(!master.getActiveGame().isCompatible(map))
-					return new Message(Scheme.ERROR).then(master.getActiveGame()).strong().then(" can't be played on ").then(map).strong();
-				/*
-				 * Don't allow votes for recently-played maps
-				 */
-				if(master.getProgression().getMapHistory().contains(map))
-					return new Message(Scheme.ERROR).then(map).strong().then(" has played recently, choose a different game");
-				/*
-				 * Log the vote
-				 */
-				master.logVote(player, map.getName());
-				return new Message(Scheme.NORMAL).then("You voted for ").then(map).strong().then(" for the next map");
-			}
 			else
-				return new Message(Scheme.ERROR).then("The next game and map have already been chosen");
+				if(master.getActiveMap() == null){
+					/*
+					 * Get the map they voted for
+					 */
+					GameMap map = !vote.isEmpty() ? master.getMap(vote) : null;
+					/*
+					 * List the available maps if they haven't chosen one
+					 */
+					if(map == null){
+						List<Message> list = Lists.newArrayList(new Message(Scheme.NORMAL).then("Click to vote for a map:"));
+						for(GameMap each : master.getMaps(master.getActiveGame()))
+							list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
+						return list;
+					}
+					/*
+					 * Don't allow votes for non-compatible maps
+					 */
+					if(!master.getActiveGame().isCompatible(map))
+						return new Message(Scheme.ERROR).then(master.getActiveGame()).strong().then(" can't be played on ").then(map).strong();
+					/*
+					 * Don't allow votes for recently-played maps
+					 */
+					if(master.getProgression().getMapHistory().contains(map))
+						return new Message(Scheme.ERROR).then(map).strong().then(" has played recently, choose a different game");
+					/*
+					 * Log the vote
+					 */
+					master.logVote(player, map.getName());
+					return new Message(Scheme.NORMAL).then("You voted for ").then(map).strong().then(" for the next map");
+				}
+				else
+					return new Message(Scheme.ERROR).then("The next game and map have already been chosen");
 		}
 		else
 			return new Message(Scheme.ERROR).then("You can only vote on games and maps during the intermission");
@@ -149,27 +142,15 @@ public class CommandListener{
 	
 	private Kit getChargedKit(Kit normal){
 		return KitHandler.getKitByIdentifier("C-" + normal.name);
+		
 	}
+	
 	
 	@CommandHandler(cmd = "charges")
 	public Object chargesCmd(CommandSender sender, String[] args){
 		
 		if(args == null || args.length < 1){
-			return Align.addSpacers("", Lists.newArrayList(
-				new Message(Scheme.HIGHLIGHT).then("You have ").then(StatMaster.getHandler().getStat((Player) sender, "charges")).strong().then(" charges"),
-				new Message(Scheme.HIGHLIGHT).then("Earn free charges by voting for us on server lists daily"),
-				new Message(Scheme.HIGHLIGHT).then("  Click here to vote on PlanetMinecraft")
-					.link("http://bit.ly/landwarvotepmc"),
-				new Message(Scheme.HIGHLIGHT).then("  Click here to vote on MineStatus")
-					.link("http://bit.ly/landwarvotems"),
-				new Message(Scheme.HIGHLIGHT).then("  Check here to vote on MinecraftServerList")
-					.link("http://bit.ly/landwarvotemcsl"),
-				new Message(Scheme.HIGHLIGHT).then("Use charges to power up your kits with ")
-					.then("/charges use").strong()
-						.tooltip(Scheme.NORMAL.normal + "Click here to use a charge").command("/charges use"),
-				new Message(Scheme.HIGHLIGHT).then("Get info about a charged kit with ")
-					.then("/charges info <kit>").strong()
-			));
+			return Align.addSpacers("", Lists.newArrayList(new Message(Scheme.HIGHLIGHT).then("You have ").then(StatMaster.getHandler().getStat((Player) sender, "charges")).strong().then(" charges"), new Message(Scheme.HIGHLIGHT).then("Earn free charges by voting for us on server lists daily"), new Message(Scheme.HIGHLIGHT).then("  Click here to vote on PlanetMinecraft").link("http://bit.ly/landwarvotepmc"), new Message(Scheme.HIGHLIGHT).then("  Click here to vote on MineStatus").link("http://bit.ly/landwarvotems"), new Message(Scheme.HIGHLIGHT).then("  Check here to vote on MinecraftServerList").link("http://bit.ly/landwarvotemcsl"), new Message(Scheme.HIGHLIGHT).then("Use charges to power up your kits with ").then("/charges use").strong().tooltip(Scheme.NORMAL.normal + "Click here to use a charge").command("/charges use"), new Message(Scheme.HIGHLIGHT).then("Get info about a charged kit with ").then("/charges info <kit>").strong()));
 		}
 		
 		if((args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("add")) && sender.hasPermission("gamemaster.admin")){
@@ -183,23 +164,16 @@ public class CommandListener{
 				StatMaster.getHandler().updateStat(target, "charges", amount);
 			else
 				StatMaster.getHandler().adjustStat(target, "charges", amount);
-			return new Message(Scheme.NORMAL)
-				.then(target.getName()).strong()
-				.then(" now has ")
-				.then(StatMaster.getHandler().getStat(target, "charges")).strong()
-				.then(" charges");
+			return new Message(Scheme.NORMAL).then(target.getName()).strong().then(" now has ").then(StatMaster.getHandler().getStat(target, "charges")).strong().then(" charges");
 		}
 		
 		OfflinePlayer other = Bukkit.getOfflinePlayer(args[0]);
 		if(other.hasPlayedBefore())
-			return new Message(Scheme.NORMAL)
-				.then(other.getName()).strong()
-				.then(" has ")
-				.then(StatMaster.getHandler().getStat(other, "charges")).strong()
-				.then(" charges");
+			return new Message(Scheme.NORMAL).then(other.getName()).strong().then(" has ").then(StatMaster.getHandler().getStat(other, "charges")).strong().then(" charges");
 		
 		return null;
 	}
+	
 	
 	@CommandHandler(cmd = "charges use")
 	public Object chargesUseCmd(Player player, String[] args){
@@ -219,6 +193,7 @@ public class CommandListener{
 		return new Message(Scheme.NORMAL).then("You used a charge to power up your kit");
 	}
 	
+	
 	@CommandHandler(cmd = "charges info")
 	public Object chargesInfoCmd(Player sender, String[] args){
 		if(args.length < 1)
@@ -226,34 +201,29 @@ public class CommandListener{
 		Kit charged = getChargedKit(KitHandler.getKit(args[0]));
 		if(charged == null)
 			return new Message(Scheme.ERROR).then("That kit doesn't have an upgraded state available");
-		new Message(Scheme.NORMAL)
-			.then("Kit info for ")
-			.then(charged.name).strong()
-			.send(sender);
+		new Message(Scheme.NORMAL).then("Kit info for ").then(charged.name).strong().send(sender);
 		new Message(Scheme.NORMAL).then("Items:").send(sender);
 		for(ItemStack item : charged.items)
-			new Message(Scheme.NORMAL)
-				.then(" - " + ItemController.friendlyItemString(item))
-					.itemTooltip(item)
-				.send(sender);
+			new Message(Scheme.NORMAL).then(" - " + ItemController.friendlyItemString(item)).itemTooltip(item).send(sender);
 		new Message(Scheme.NORMAL).then("Effects:").send(sender);
 		for(PotionEffect effect : charged.effects)
 			new Message(Scheme.NORMAL).then(" - " + ItemController.friendlyEffectString(effect)).send(sender);
 		return null;
 	}
 	
+	
 	@CommandHandler(cmd = "teamchat")
 	public Object teamchatCmd(Player player, String[] args){
-		return new Message(Scheme.NORMAL)
-			.then("Team-exclusive chatting is ")
-			.then(master.getListener().toggleTeamChat(player) ? "enabled" : "disabled").strong();
+		return new Message(Scheme.NORMAL).then("Team-exclusive chatting is ").then(master.getListener().toggleTeamChat(player) ? "enabled" : "disabled").strong();
 	}
+	
 	
 	@CommandHandler(cmd = "fixme")
 	public Object fixmeCmd(Player player, String[] args){
 		Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tp " + player.getName() + " " + player.getName());
 		return new Message(Scheme.NORMAL).then("No problem");
 	}
+	
 	
 	@CommandHandler(cmd = "changeteam")
 	public Object changeteamCmd(CommandSender sender, String[] args){
@@ -269,21 +239,18 @@ public class CommandListener{
 			return new Message(Scheme.ERROR).t("Couldn't find specified player");
 		if(sender.hasPermission("gamemaster.admin")){
 			((TeamAutoGame) master.getActiveGame()).changeTeam(target);
-			return new Message(Scheme.NORMAL)
-				.t("Changing ")
-				.t(target.equals(sender) ? "your" : target.getName() + "'s").s()
-				.t(" team");
+			return new Message(Scheme.NORMAL).t("Changing ").t(target.equals(sender) ? "your" : target.getName() + "'s").s().t(" team");
 		}
 		return null;
 	}
 	
+	
 	@CommandHandler(cmd = "balanceteams")
 	public Object balanceteamsCmd(CommandSender sender, String[] args){
 		TeamAutoGame.setBalancing(!TeamAutoGame.isBalancing());
-		return new Message(Scheme.NORMAL)
-			.t("Automatic team balancing is ")
-			.t(TeamAutoGame.isBalancing() ? "enabled" : "disabled").s();
+		return new Message(Scheme.NORMAL).t("Automatic team balancing is ").t(TeamAutoGame.isBalancing() ? "enabled" : "disabled").s();
 	}
+	
 	
 	@CommandHandler(cmd = "join")
 	public Object joinCmd(Player player, String[] args){
@@ -303,6 +270,7 @@ public class CommandListener{
 		return new Message(Scheme.NORMAL).t("You're already watching the games");
 	}
 	
+	
 	@CommandHandler(cmd = "leave")
 	public Object leaveCmd(Player player, String[] args){
 		if(master.getState(player) != PlayerState.EXTERIOR){
@@ -312,11 +280,13 @@ public class CommandListener{
 		return new Message(Scheme.NORMAL).t("You weren't in the games");
 	}
 	
+	
 	@CommandHandler(cmd = "setlobby")
 	public Object setWaitCmd(Player player, String[] args){
 		master.setLobby(player.getLocation());
 		return new Message(Scheme.NORMAL).t("Set the waiting room to your location");
 	}
+	
 	
 	@CommandHandler(cmd = "setfireworks")
 	public Object setFireworksCmd(Player player, String[] args){
@@ -324,11 +294,13 @@ public class CommandListener{
 		return new Message(Scheme.NORMAL).t("Set the fireworks launch site to your location");
 	}
 	
+	
 	@CommandHandler(cmd = "setwelcome")
 	public Object setWelcoemCmd(Player player, String[] args){
 		master.setWelcome(player.getLocation());
 		return new Message(Scheme.NORMAL).t("Set the welcome spawn to your location");
 	}
+	
 	
 	@CommandHandler(cmd = "endgame")
 	public Object endGameCmd(CommandSender sender, String[] args){
@@ -348,6 +320,7 @@ public class CommandListener{
 		master.getProgression().setNextMap(null);
 		return new Message(Scheme.NORMAL).t("Set the next game to ").t(game).s();
 	}
+	
 	
 	@CommandHandler(cmd = "nextmap")
 	public Object nextMapCmd(CommandSender sender, String[] args){
@@ -369,9 +342,9 @@ public class CommandListener{
 		for(String str : args)
 			reason += str + " ";
 		reason = reason.trim();
-		for (Player all : Bukkit.getOnlinePlayers()){
+		for(Player all : Bukkit.getOnlinePlayers()){
 			if(reason.equals(""))
-				all.kickPlayer("The server is restarting to put in a patch");	
+				all.kickPlayer("The server is restarting to put in a patch");
 			else
 				all.kickPlayer("The server is restarting to patch " + reason);
 		}
@@ -380,39 +353,45 @@ public class CommandListener{
 		return null;
 	}
 	
+	
 	@CommandHandler(cmd = "gm-debug-cycle")
-	public Object gmDebugCycleCmd(CommandSender sender, String[] args){	
+	public Object gmDebugCycleCmd(CommandSender sender, String[] args){
 		master.getTicker().debug();
 		return new Message(Scheme.NORMAL).then("Priting debug info for one tick");
 	}
-
+	
+	
 	@CommandHandler(cmd = "game-map create")
 	public Object mapCreateCmd(CommandSender sender, String[] args){
-		if(args.length < 1)
+		String name = GenUtil.concat(Lists.newArrayList(args), "", " ", "");
+		if(name.isEmpty())
 			return new Message(Scheme.ERROR).t("Include the name of the new map");
-
+		
 		if(master.getEditMap() != null)
 			Bukkit.dispatchCommand(sender, "game-map save");
-		if(master.getMap(args[0]) != null)
+		if(master.getMap(name) != null)
 			return new Message(Scheme.ERROR).t("A map with that name already exists");
-		GameMap map = new GameMap(args[0]);
+		GameMap map = new GameMap(name);
 		master.setEditMap(map);
-		return new Message(Scheme.NORMAL).t("Created a new map named ").t(args[0]).s();
+		return new Message(Scheme.NORMAL).t("Created a new map named ").t(name).s();
 	}
+	
 	
 	@CommandHandler(cmd = "game-map edit")
 	public Object mapEditCmd(CommandSender sender, String[] args){
-		if(args.length < 1)
+		String name = GenUtil.concat(Lists.newArrayList(args), "", " ", "");
+		if(name.isEmpty())
 			return new Message(Scheme.ERROR).t("Include the name of the map to edit");
 		
 		if(master.getEditMap() != null)
 			Bukkit.dispatchCommand(sender, "game-map save");
-		GameMap map = master.getMap(args[0]);
+		GameMap map = master.getMap(name);
 		if(map == null)
 			return new Message(Scheme.ERROR).t("That map doesn't exist");
 		master.setEditMap(map);
 		return new Message(Scheme.NORMAL).t("Editing the map ").t(master.getEditMap()).s();
 	}
+	
 	
 	@CommandHandler(cmd = "game-map delete")
 	public Object mapDeleteCmd(CommandSender sender, String[] args){
@@ -426,6 +405,7 @@ public class CommandListener{
 		return new Message(Scheme.NORMAL).t("Deleted the map named ").t(t).s();
 	}
 	
+	
 	@CommandHandler(cmd = "game-map save")
 	public Object mapSaveCmd(CommandSender sender, String[] args){
 		if(master.getEditMap() == null)
@@ -434,9 +414,10 @@ public class CommandListener{
 		master.registerMap(master.getEditMap());
 		GameMap t = master.getEditMap();
 		master.setEditMap(null);
-
+		
 		return new Message(Scheme.NORMAL).t("Saved the map named ").t(t).s();
 	}
+	
 	
 	@CommandHandler(cmd = "game-map info")
 	public Object mapInfoCmd(CommandSender sender, String[] args){
@@ -461,29 +442,21 @@ public class CommandListener{
 		return list;
 	}
 	
+	
 	@CommandHandler(cmd = "game-map list")
 	public Object mapListCmd(CommandSender sender, String[] args){
-		new Message(Scheme.NORMAL)
-			.t("Maps: ").s()
-			.t(Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps()), "&x", "&z, &x", ""), Scheme.NORMAL))
-			.send(sender);
+		new Message(Scheme.NORMAL).t("Maps: ").s().t(Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps()), "&x", "&z, &x", ""), Scheme.NORMAL)).send(sender);
 		if(master.getEditMap() != null)
-			new Message(Scheme.NORMAL)
-				.t("Editing: ").s()
-				.t(master.getEditMap())
-				.send(sender);
+			new Message(Scheme.NORMAL).t("Editing: ").s().t(master.getEditMap()).send(sender);
 		if(args.length > 0){
 			AutoGame game = master.getGame(args[0]);
 			if(game != null)
-				new Message(Scheme.NORMAL)
-					.t("Compatible with ")
-					.t(game).s()
-					.t(": " + Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps(game)), "&x", "&z, &x", ""), Scheme.NORMAL))
-					.send(sender);
+				new Message(Scheme.NORMAL).t("Compatible with ").t(game).s().t(": " + Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps(game)), "&x", "&z, &x", ""), Scheme.NORMAL)).send(sender);
 		}
 		return null;
 	}
-
+	
+	
 	@CommandHandler(cmd = "game-map world")
 	public Object mapWorldCmd(Player player, String[] args){
 		if(master.getEditMap() == null)
@@ -510,6 +483,7 @@ public class CommandListener{
 		return new Message(Scheme.NORMAL).t("The ").t(newTeam).s().t(" now plays on this map");
 	}
 	
+	
 	@CommandHandler(cmd = "game-map removeteam")
 	public Object mapRemoveTeamCmd(CommandSender sender, String[] args){
 		if(master.getEditMap() == null)
@@ -529,6 +503,7 @@ public class CommandListener{
 		else
 			return new Message(Scheme.NORMAL).t("The ").t(oldTeam).s().t(" team was not part of this map");
 	}
+	
 	
 	@CommandHandler(cmd = "game-map setspawn")
 	public Object mapSetSpawnCmd(Player player, String[] args){
