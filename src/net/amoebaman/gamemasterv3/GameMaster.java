@@ -69,6 +69,15 @@ public class GameMaster extends JavaPlugin{
 	public void onEnable(){
 		INSTANCE = this;
 		/*
+		 * Set up components
+		 */
+		commands = new CommandListener(this);
+		events = new EventListener(this);
+		CommandController.registerCommands(commands);
+		Bukkit.getPluginManager().registerEvents(events, this);
+		progression = new Progression(this);
+		playerManager = new Players(this);
+		/*
 		 * Establish files and folders
 		 */
 		configFile = new File(getDataFolder().getPath() + "/config.yml");
@@ -148,15 +157,6 @@ public class GameMaster extends JavaPlugin{
 			health.setDisplaySlot(DisplaySlot.BELOW_NAME);
 			health.setDisplayName("HP");
 		}
-		/*
-		 * Set up components
-		 */
-		commands = new CommandListener(this);
-		events = new EventListener(this);
-		CommandController.registerCommands(commands);
-		Bukkit.getPluginManager().registerEvents(events, this);
-		progression = new Progression(this);
-		playerManager = new Players(this);
 		/*
 		 * Start the ball rolling
 		 */
@@ -468,6 +468,20 @@ public class GameMaster extends JavaPlugin{
 		if(newState == PlayerState.WATCHING)
 			player.setGameMode(GameMode.CREATIVE);
 		/*
+		 * Update visibilities
+		 */
+		for(Player other : Bukkit.getOnlinePlayers())
+			if(!other.equals(player)){
+				if(getState(other) == PlayerState.PLAYING && newState == PlayerState.WATCHING)
+					other.hidePlayer(player);
+				else
+					other.showPlayer(player);
+				if(newState == PlayerState.PLAYING && getState(other) == PlayerState.WATCHING)
+					player.hidePlayer(other);
+				else
+					player.showPlayer(other);
+			}
+		/*
 		 * Update colors
 		 */
 		playerManager.updateColors(player);
@@ -522,6 +536,14 @@ public class GameMaster extends JavaPlugin{
 		Set<Player> set = new HashSet<Player>();
 		for(Player each : Bukkit.getOnlinePlayers())
 			if(each != null && getState(each) == PlayerState.PLAYING)
+				set.add(each);
+		return set;
+	}
+	
+	public Set<Player> getWatchers(){
+		Set<Player> set = new HashSet<Player>();
+		for(Player each : Bukkit.getOnlinePlayers())
+			if(each != null && getState(each) == PlayerState.WATCHING)
 				set.add(each);
 		return set;
 	}
