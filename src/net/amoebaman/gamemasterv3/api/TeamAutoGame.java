@@ -324,7 +324,7 @@ public abstract class TeamAutoGame extends AutoGame{
 		/*
 		 * Broadcast
 		 */
-		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(new Message(Scheme.HIGHLIGHT).t(getName().toUpperCase()).s().t(" is starting"), new Message(Scheme.HIGHLIGHT).t(master.getActiveMap()).strong().t(" will be the battlefield"))));
+		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(new Message(Scheme.HIGHLIGHT).t(toString().toUpperCase()).s().t(" is starting"), new Message(Scheme.HIGHLIGHT).t(master.getActiveMap()).strong().t(" will be the battlefield"))));
 		/*
 		 * Split up the teams
 		 */
@@ -432,7 +432,7 @@ public abstract class TeamAutoGame extends AutoGame{
 		/*
 		 * Broadcast
 		 */
-		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(new Message(Scheme.HIGHLIGHT).t(getName().toUpperCase()).s().t(" is finished"), winner == Team.NEUTRAL ? new Message(Scheme.HIGHLIGHT).t("The match ended in a draw") : new Message(Scheme.HIGHLIGHT).t("The ").t(winner).color(winner.chat).t(" team won the game"))));
+		Chat.broadcast(Align.addSpacers("" + Scheme.HIGHLIGHT.normal.color() + CustomChar.LIGHT_BLOCK, Align.center(new Message(Scheme.HIGHLIGHT).t(toString().toUpperCase()).s().t(" is finished"), winner == Team.NEUTRAL ? new Message(Scheme.HIGHLIGHT).t("The match ended in a draw") : new Message(Scheme.HIGHLIGHT).t("The ").t(winner).color(winner.chat).t(" team won the game"))));
 		/*
 		 * End the game
 		 */
