@@ -332,7 +332,7 @@ public class EventListener implements Listener{
 				else if(master.getActiveMap() == null)
 					event.setMotd(new Message(Scheme.HIGHLIGHT).t("Voting on a map for ").t(master.getActiveGame()).s().toString());
 				else
-					event.setMotd(new Message(Scheme.HIGHLIGHT).t("We're waiting for").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().t(" to start").toString());
+					event.setMotd(new Message(Scheme.HIGHLIGHT).t("Waiting for ").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().t(" to start").toString());
 			}
 			else
 				event.setMotd(new Message(Scheme.HIGHLIGHT).t("Playing ").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().toString());
