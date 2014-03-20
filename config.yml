@@ -1,0 +1,5 @@
+timing:
+    intermission: 90
+    game-voting: 30
+    map-voting: 30
+wrap-server: false

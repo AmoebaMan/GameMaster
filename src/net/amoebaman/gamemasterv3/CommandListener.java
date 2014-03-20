@@ -88,7 +88,7 @@ public class CommandListener{
 				if(game == null){
 					List<Message> list = Lists.newArrayList(new Message(Scheme.NORMAL).then("Click to vote for a game:"));
 					for(AutoGame each : master.getGames())
-						list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
+						list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each.getName()));
 					return list;
 				}
 				/*
@@ -114,7 +114,7 @@ public class CommandListener{
 					if(map == null){
 						List<Message> list = Lists.newArrayList(new Message(Scheme.NORMAL).then("Click to vote for a map:"));
 						for(GameMap each : master.getMaps(master.getActiveGame()))
-							list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each));
+							list.add(new Message(Scheme.NORMAL).then(" > ").then(each).strong().tooltip(Chat.format("&xClick to vote for &z" + each, Scheme.NORMAL)).command("/vote " + each.getName()));
 						return list;
 					}
 					/*

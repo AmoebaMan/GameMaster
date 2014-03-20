@@ -42,8 +42,10 @@ public class Players implements Listener{
 	 * @param culprit their damager
 	 */
 	public void stampDamage(Player victim, Player culprit){
-		lastDamager.put(victim, culprit.getName());
-		lastDamageTime.put(victim, System.currentTimeMillis());
+		if(culprit != null){
+			lastDamager.put(victim, culprit.getName());
+			lastDamageTime.put(victim, System.currentTimeMillis());
+		}
 	}
 	
 	/**
@@ -149,7 +151,7 @@ public class Players implements Listener{
 		if(!respawning.remove(player))
 			respawning.add(player);
 	}
-
+	
 	protected void stampMovement(Player player){
 		lastMovementTime.put(player, System.currentTimeMillis());
 	}

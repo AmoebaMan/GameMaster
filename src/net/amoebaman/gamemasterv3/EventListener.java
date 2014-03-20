@@ -109,6 +109,11 @@ public class EventListener implements Listener{
 			event.setCancelled(true);
 	}
 	
+	public void preventWatcherInteraction(PlayerInteractEvent event){
+		if(master.getState(event.getPlayer()) == PlayerState.WATCHING)
+			event.setCancelled(true);
+	}
+	
 	@EventHandler(priority = EventPriority.LOWEST)
 	public void entityDamageModify(final EntityDamageEvent event){
 		/*
@@ -156,6 +161,11 @@ public class EventListener implements Listener{
 			if(culprit == null)
 				return;
 			/*
+			 * Players in spectate mode can't hurt anything
+			 */
+			if(master.getState(culprit) == PlayerState.WATCHING)
+				event.setCancelled(true);
+			/*
 			 * Remember kids, friendly fire isn't!
 			 */
 			if(master.getActiveGame() instanceof TeamAutoGame){
@@ -168,30 +178,32 @@ public class EventListener implements Listener{
 			 */
 			if(master.getActiveGame() instanceof SafeSpawnModule){
 				SafeSpawnModule game = (SafeSpawnModule) master.getActiveGame();
-				if(victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSafeRadius(victim)){
+				if(game.getSafeLoc(victim) != null && victim.getLocation().distance(game.getSafeLoc(victim)) < game.getSafeRadius(victim)){
 					event.setCancelled(true);
 					new Message(Scheme.WARNING).t(victim.getName()).s().t(" is under spawn protection").send(culprit);
 				}
-				if(culprit.getLocation().distance(game.getSafeLoc(culprit)) < game.getSafeRadius(culprit) && victim.getLocation().distance(game.getSafeLoc(culprit)) > game.getSafeRadius(culprit)){
+				if(game.getSafeLoc(culprit) != null && culprit.getLocation().distance(game.getSafeLoc(culprit)) < game.getSafeRadius(culprit) && victim.getLocation().distance(game.getSafeLoc(culprit)) > game.getSafeRadius(culprit)){
 					event.setCancelled(true);
 					new Message(Scheme.WARNING).t("You can't attack enemies while under spawn protection").send(culprit);
 				}
 			}
-			/*
-			 * Stamp the damage
-			 */
-			if(!event.isCancelled())
+			if(!event.isCancelled()){
+				/*
+				 * Stamp the damage
+				 */
 				master.getPlayerManager().stampDamage(victim, culprit);
-			/*
-			 * Modify the damage to put the true source on record
-			 */
-			final Player fVictim = victim, fCulprit = culprit;
-			Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
-				
-				public void run(){
-					fVictim.setLastDamageCause(new EntityDamageByEntityEvent(fVictim, fCulprit, DamageCause.ENTITY_ATTACK, event.getDamage()));
-				}
-			});
+				/*
+				 * Modify the damage to put the true source on record
+				 */
+				final Player fVictim = victim, fCulprit = culprit;
+				Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){
+					
+					public void run(){
+						fVictim.setLastDamageCause(new EntityDamageByEntityEvent(fVictim, fCulprit, DamageCause.ENTITY_ATTACK, event.getDamage()));
+					}
+					
+				});
+			}
 		}
 	}
 	
@@ -200,13 +212,15 @@ public class EventListener implements Listener{
 		if(!(event.getEntity() instanceof Player))
 			return;
 		Player player = (Player) event.getEntity();
-		if(event.getCause() == DamageCause.FIRE_TICK || event.getCause() == DamageCause.MAGIC || event.getCause() == DamageCause.WITHER || event.getCause() == DamageCause.POISON)
+		if(master.getState(player) == PlayerState.PLAYING &&
+			(event.getCause() == DamageCause.FIRE_TICK || event.getCause() == DamageCause.MAGIC || event.getCause() == DamageCause.WITHER || event.getCause() == DamageCause.POISON))
+			
 			master.getPlayerManager().stampDamage(player, master.getPlayerManager().getLastDamager(player));
 	}
 	
 	@EventHandler
 	public void foodLevelChange(FoodLevelChangeEvent event){
-		if(master.getState() == GameState.INTERMISSION && master.getState((Player) event.getEntity()) == PlayerState.PLAYING || master.getState((Player) event.getEntity()) == PlayerState.WATCHING)
+		if((master.getState() == GameState.INTERMISSION && master.getState((Player) event.getEntity()) == PlayerState.PLAYING) || master.getState((Player) event.getEntity()) == PlayerState.WATCHING)
 			event.setCancelled(true);
 	}
 	
@@ -219,12 +233,12 @@ public class EventListener implements Listener{
 					if(master.getActiveGame() == null)
 						Chat.send(player,
 							new Message(Scheme.HIGHLIGHT).then("We're voting on the next game"),
-							new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote")
+							new Message(Scheme.HIGHLIGHT).then("Click here").strong().command("/vote").then(" to vote")
 							);
 					else if(master.getActiveMap() == null)
 						Chat.send(player,
 							new Message(Scheme.HIGHLIGHT).then("We're voting on the map for ").t(master.getActiveGame()).s(),
-							new Message(Scheme.HIGHLIGHT).then("Click here").strong().style(ChatColor.BOLD).command("/vote").then(" to vote")
+							new Message(Scheme.HIGHLIGHT).then("Click here").strong().command("/vote").then(" to vote")
 							);
 					else
 						Chat.send(player,
@@ -355,12 +369,12 @@ public class EventListener implements Listener{
 			if(master.getActiveGame() instanceof SafeSpawnModule){
 				SafeSpawnModule game = (SafeSpawnModule) master.getActiveGame();
 				if(player.getLocation().distance(game.getSafeLoc(player)) > game.getSafeRadius(player))
-				if(!event.getContext().overrides && event.getContext() != GiveKitContext.SIGN_TAKEN && !player.hasPermission("gamemaster.globalkit")){
-					new Message(Scheme.WARNING)
+					if(!event.getContext().overrides && event.getContext() != GiveKitContext.SIGN_TAKEN && !player.hasPermission("gamemaster.globalkit")){
+						new Message(Scheme.WARNING)
 						.then("You must be in your spawn to take kits via command")
 						.send(player);
-					event.setCancelled(true);
-				}
+						event.setCancelled(true);
+					}
 			}
 	}
 	
@@ -378,7 +392,7 @@ public class EventListener implements Listener{
 			}
 	}
 	
-	@EventHandler(priority=EventPriority.MONITOR)
+	@EventHandler(priority = EventPriority.HIGHEST)
 	public void teamChat(AsyncPlayerChatEvent event){
 		Player player = event.getPlayer();
 		if(teamChatting.contains(player) && master.getState(player) == PlayerState.PLAYING && master.getState() != GameState.INTERMISSION && master.getActiveGame() instanceof TeamAutoGame){
@@ -388,8 +402,13 @@ public class EventListener implements Listener{
 					event.getRecipients().remove(other);
 			event.setMessage("(" + game.getTeam(player).chat + "TEAM" + ChatColor.WHITE + ") " + event.getMessage());
 		}
+		if(master.getState(player) == PlayerState.WATCHING){
+			for(Player playing : master.getPlayers())
+				event.getRecipients().remove(playing);
+			event.setMessage("(" + ChatColor.DARK_GRAY + "SPECTATOR" + ChatColor.WHITE + ") " + event.getMessage());
+		}
 	}
-
+	
 	@EventHandler
 	public void votifier(VotifierEvent event){
 		Vote vote = event.getVote();
@@ -405,22 +424,22 @@ public class EventListener implements Listener{
 			StatMaster.getHandler().incrementStat(player, "charges");
 			StatMaster.getHandler().incrementCommunityStat("votes");
 			new Message(Scheme.HIGHLIGHT)
-				.t(player.getName()).s()
-				.t(" voted for the server, and now has ")
-				.t(StatMaster.getHandler().getStat(player, "charges")).s()
-				.t(" charges")
-				.broadcast();
+			.t(player.getName()).s()
+			.t(" voted for the server, and now has ")
+			.t(StatMaster.getHandler().getStat(player, "charges")).s()
+			.t(" charges")
+			.broadcast();
 		}
 	}
 	
 	@SuppressWarnings("deprecation")
-    @EventHandler
+	@EventHandler
 	public void managePotionSplashes(PotionSplashEvent event){
 		ThrownPotion potion = event.getPotion();
 		Player thrower = null;
 		if(potion.getShooter() instanceof Player)
 			thrower = (Player) potion.getShooter();
-		if(thrower == null || master.getState() != GameState.RUNNING)
+		if(thrower == null || master.getState(thrower) != PlayerState.PLAYING || master.getState() != GameState.RUNNING)
 			return;
 		/*
 		 * Check to see if this potion is harmful

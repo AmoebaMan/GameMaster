@@ -66,7 +66,7 @@ public class GameMap{
 	}
 	
 	public String toString(){
-		return getName();
+		return getName().replaceAll("[-_]", " ");
 	}
 	
 	public boolean equals(Object x){

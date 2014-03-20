@@ -90,16 +90,18 @@ public class GameMaster extends JavaPlugin{
 			/*
 			 * The "proper" configuration
 			 */
-			getConfig().options().pathSeparator('/');
 			getConfig().load(configFile);
+			getConfig().options().copyDefaults(true);
+			getConfig().options().copyHeader(true);
+			getConfig().save(configFile);
 			
-			lobby = S_Loc.stringLoad(getConfig().getString("locations/lobby"));
+			lobby = S_Loc.stringLoad(getConfig().getString("locations.lobby"));
 			if(lobby == null)
 				lobby = new Location(Bukkit.getWorlds().get(0), 0.5, 80, 0.5);
-			fireworks = S_Loc.stringLoad(getConfig().getString("locations/fireworks"));
+			fireworks = S_Loc.stringLoad(getConfig().getString("locations.fireworks"));
 			if(fireworks == null)
 				fireworks = lobby.clone();
-			welcome = S_Loc.stringLoad(getConfig().getString("locations/welcome"));
+			welcome = S_Loc.stringLoad(getConfig().getString("locations.welcome"));
 			if(welcome == null)
 				welcome = lobby.clone();
 			/*
@@ -452,11 +454,12 @@ public class GameMaster extends JavaPlugin{
 		/*
 		 * Join/leave the game/lobby
 		 */
-		if(state != GameState.INTERMISSION)
-			if(newState == PlayerState.EXTERIOR)
-				activeGame.leave(player);
-			else
+		if(state != GameState.INTERMISSION){
+			if(newState == PlayerState.PLAYING)
 				activeGame.join(player);
+			else
+				activeGame.leave(player);
+		}
 		else
 			if(newState != PlayerState.EXTERIOR)
 				player.teleport(lobby);
