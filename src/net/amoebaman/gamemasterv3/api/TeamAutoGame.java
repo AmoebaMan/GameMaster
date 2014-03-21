@@ -318,6 +318,8 @@ public abstract class TeamAutoGame extends AutoGame{
 		/*
 		 * Initialize teams
 		 */
+		scores.clear();
+		teams.clear();
 		Set<Team> activeTeams = getActiveTeams(master.getActiveMap());
 		for(Team team : activeTeams)
 			team.getBukkitTeam();
