@@ -10,6 +10,7 @@ import java.util.Set;
 
 import net.amoebaman.statmaster.StatMaster;
 
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import com.google.common.collect.Lists;
@@ -76,6 +77,15 @@ public class Utils {
 				return 1;
 			return 0;
 		}
+	}
+	
+	public static Location getHoloHudLoc(Player player){
+		Location loc = player.getLocation().clone();
+		double xOffset = Math.sin(-loc.getYaw() * Math.PI/180.0);
+		double zOffset = Math.cos(-loc.getYaw() * Math.PI/180.0);
+		loc.setX(loc.getX() + xOffset * 5);
+		loc.setZ(loc.getZ() + zOffset * 5);
+		return loc;
 	}
 	
 }

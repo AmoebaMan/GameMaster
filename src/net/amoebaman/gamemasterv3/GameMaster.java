@@ -3,35 +3,50 @@ package net.amoebaman.gamemasterv3;
 import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Location;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Criterias;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.util.Vector;
+
+import com.dsh105.holoapi.HoloAPI;
+import com.dsh105.holoapi.api.Hologram;
+import com.dsh105.holoapi.api.HologramFactory;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.GameMap;
+import net.amoebaman.gamemasterv3.api.TeamAutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
+import net.amoebaman.gamemasterv3.enums.Team;
+import net.amoebaman.gamemasterv3.modules.TimerModule;
+import net.amoebaman.gamemasterv3.util.Utils;
 import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.statmaster.Statistic;
 import net.amoebaman.utils.CommandController;
 import net.amoebaman.utils.S_Loc;
+import net.amoebaman.utils.chat.Chat;
+import net.amoebaman.utils.chat.Message;
+import net.amoebaman.utils.chat.Scheme;
 import net.amoebaman.utils.maps.PlayerMap;
 import net.amoebaman.utils.maps.StringMap;
 import net.amoebaman.utils.nms.StatusBar;
+
+import net.minecraft.util.com.google.common.collect.Lists;
 
 /**
  * The main class
@@ -49,6 +64,9 @@ public class GameMaster extends JavaPlugin{
 	
 	private PlayerMap<PlayerState> players = new PlayerMap<PlayerState>(PlayerState.EXTERIOR);
 	private PlayerMap<String> votes = new PlayerMap<String>("");
+	
+	private PlayerMap<Hologram> statusHolos = new PlayerMap<Hologram>();
+	private ItemStack holoHoldItem;
 	
 	private AutoGame activeGame;
 	private GameMap activeMap, editMap;
@@ -145,6 +163,18 @@ public class GameMaster extends JavaPlugin{
 		StatMaster.getHandler().registerCommunityStat(new Statistic("Big games", 0));
 		StatMaster.getHandler().registerCommunityStat(new Statistic("Votes", 0));
 		/*
+		 * Set up hologram stuff
+		 */
+		holoHoldItem = new ItemStack(Material.PAPER);
+		ItemMeta meta = holoHoldItem.getItemMeta();
+		meta.setDisplayName(ChatColor.DARK_RED + "Game Status");
+		meta.setLore(Lists.newArrayList(ChatColor.GOLD + "Hold to view game status"));
+		holoHoldItem.setItemMeta(meta);
+		Bukkit.getScheduler().runTaskTimer(this, new Runnable(){ public void run(){
+			for(Player player : Bukkit.getOnlinePlayers())
+				moveStatusHolo(player);
+		}}, 0L, 1L);
+		/*
 		 * Start the ticker
 		 */
 		ticker = new GameTicker(this);
@@ -171,9 +201,11 @@ public class GameMaster extends JavaPlugin{
 		 */
 		Bukkit.getScheduler().cancelTask(tickTaskId);
 		/*
-		 * Remove all status bars
+		 * Remove all funky packet things
 		 */
 		StatusBar.removeAllStatusBars();
+		for(Player player : Bukkit.getOnlinePlayers())
+			removeStatusHolo(player);
 		/*
 		 * Save the configs
 		 */
@@ -455,8 +487,10 @@ public class GameMaster extends JavaPlugin{
 		 * Join/leave the game/lobby
 		 */
 		if(state != GameState.INTERMISSION){
-			if(newState == PlayerState.PLAYING)
+			if(newState == PlayerState.PLAYING){
+				playerManager.resetPlayer(player);
 				activeGame.join(player);
+			}
 			else
 				activeGame.leave(player);
 		}
@@ -468,8 +502,10 @@ public class GameMaster extends JavaPlugin{
 		 */
 		if(newState == PlayerState.PLAYING)
 			player.setGameMode(GameMode.SURVIVAL);
-		if(newState == PlayerState.WATCHING)
+		if(newState == PlayerState.WATCHING){
 			player.setGameMode(GameMode.CREATIVE);
+			player.getInventory().addItem(getHoloItem());
+		}
 		/*
 		 * Update visibilities
 		 */
@@ -648,6 +684,91 @@ public class GameMaster extends JavaPlugin{
 	 */
 	public void endGame(){
 		progression.intermission();
+	}
+	
+	protected void sendStatusHolo(CommandSender sender){
+		
+		final Player player = sender instanceof Player ? (Player) sender : null;
+		
+		List<String> status = Lists.newArrayList();
+		
+		if(getState() != GameState.INTERMISSION){
+			status.add(
+				new Message(Scheme.HIGHLIGHT)
+				.t("Playing ")
+				.t(getActiveGame()).s()
+				.t(" on ")
+				.t(getActiveMap()).s()
+				.getText()
+			);
+			if(getActiveGame() instanceof TeamAutoGame && player != null && getState(player) == PlayerState.PLAYING){
+				Team team = ((TeamAutoGame) getActiveGame()).getTeam(player);
+				status.add(
+					new Message(Scheme.HIGHLIGHT)
+					.t("You're on the ")
+					.t(team).color(team.chat)
+					.t(" team")
+					.getText()
+					);
+			}
+			for(Object msg : getActiveGame().getStatusMessages(player))
+				if(msg instanceof Message)
+					status.add(((Message) msg).getText());
+				else
+					status.add(String.valueOf(msg));
+			if(getActiveGame() instanceof TimerModule){
+				long millis = ((TimerModule) getActiveGame()).getGameLength() * 60 * 1000 - (System.currentTimeMillis() - getGameStart());
+				int seconds = Math.round(millis / 1000F);
+				int mins = seconds / 60;
+				status.add(
+					new Message(Scheme.NORMAL)
+					.t(mins).s()
+					.t(" minutes and ")
+					.t(seconds % 60).s()
+					.t(" seconds remain")
+					.getText()
+					);
+			}
+		}
+		else
+			status.add(
+				new Message(Scheme.WARNING)
+				.t("No game is playing right now")
+				.getText()
+			);
+			
+		
+		if(player == null)
+			Chat.send(sender, status);
+		else{
+			removeStatusHolo(player);
+			Hologram holo = new HologramFactory(this)
+			.withLocation(Utils.getHoloHudLoc(player).add(new Vector(0, 0.25 * status.size(), 0)))
+			.withText(status.toArray(new String[0]))
+			.build();
+			holo.clearAllPlayerViews();
+			holo.show(player);
+			statusHolos.put(player, holo);
+		}
+	}
+	
+	protected void moveStatusHolo(Player player){
+		if(statusHolos.containsKey(player))
+			statusHolos.get(player).move(player, Utils.getHoloHudLoc(player).toVector().add(new Vector(0, 0.25 * statusHolos.get(player).getLines().length, 0)));
+	}
+	
+	protected void removeStatusHolo(Player player){
+		if(statusHolos.containsKey(player)){
+			Hologram holo = statusHolos.get(player);
+			holo.clearAllPlayerViews();
+			HoloAPI.getManager().stopTracking(holo);
+			HoloAPI.getManager().clearFromFile(holo.getSaveId());
+			statusHolos.remove(player);
+		}
+	}
+	
+	protected ItemStack getHoloItem(){
+		return holoHoldItem.clone();
 	}
 	
 }

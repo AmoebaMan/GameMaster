@@ -21,6 +21,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
 import com.vexsoftware.votifier.model.Vote;
@@ -226,6 +227,9 @@ public class EventListener implements Listener{
 	
 	@EventHandler
 	public void playerJoin(final PlayerJoinEvent event){
+		/*
+		 * Do nothing else if we're not wrapping the server
+		 */
 		if(master.getConfig().getBoolean("wrap-server", false)){
 			final Player player = event.getPlayer();
 			Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
@@ -262,6 +266,17 @@ public class EventListener implements Listener{
 			else if(!player.hasPlayedBefore()){
 				master.setState(player, PlayerState.EXTERIOR);
 				player.teleport(master.getWelcome());
+				Bukkit.getScheduler().runTask(master, new Runnable(){ public void run(){
+					new Message(Scheme.HIGHLIGHT)
+						.t(player.getName()).s()
+						.t(" has joined the server for the first time!  Everybody give them a huge welcome!")
+						.broadcast();
+					new Message(Scheme.HIGHLIGHT)
+						.t("In total, ")
+						.t(Bukkit.getOfflinePlayers().length + " unique players").s()
+						.t("have joined the server!")
+						.broadcast();
+				}});
 			}
 			/*
 			 * Otherwise, just shove them headfirst into the games
@@ -365,7 +380,7 @@ public class EventListener implements Listener{
 	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
 	public void restrictCommandKitsToSpawns(GiveKitEvent event){
 		final Player player = event.getPlayer();
-		if(master.getState(player) == PlayerState.PLAYING && master.getState() == GameState.RUNNING)
+		if(master.getState(player) == PlayerState.PLAYING && master.getState() == GameState.RUNNING){
 			if(master.getActiveGame() instanceof SafeSpawnModule){
 				SafeSpawnModule game = (SafeSpawnModule) master.getActiveGame();
 				if(player.getLocation().distance(game.getSafeLoc(player)) > game.getSafeRadius(player))
@@ -376,6 +391,11 @@ public class EventListener implements Listener{
 						event.setCancelled(true);
 					}
 			}
+			if(!event.isCancelled() && event.getContext() != GiveKitContext.PARENT_GIVEN)
+				Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
+					player.getInventory().addItem(master.getHoloItem());
+				}});
+		}
 	}
 	
 	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
@@ -467,14 +487,29 @@ public class EventListener implements Listener{
 	}
 	
 	@EventHandler
+	public void holoHoldItems(PlayerItemHeldEvent event){
+		Player player = event.getPlayer();
+		ItemStack newItem = player.getInventory().getItem(event.getNewSlot());
+		if(master.getHoloItem().isSimilar(newItem))
+			master.sendStatusHolo(player);
+		else
+			master.removeStatusHolo(player);
+	}
+	
+	@EventHandler
 	public void logPlayerMoves(PlayerMoveEvent event){
 		master.getPlayerManager().stampMovement(event.getPlayer());
 	}
 	
 	@EventHandler
-	public void dontDropItems(PlayerDeathEvent event){
+	public void manageDeath(PlayerDeathEvent event){
 		if(master.getState(event.getEntity()) == PlayerState.PLAYING)
 			event.getDrops().clear();
+		/*
+		 * Remove fancy packet stuff
+		 */
+		StatusBar.removeStatusBar(event.getEntity());
+		master.removeStatusHolo(event.getEntity());
 	}
 	
 }

@@ -11,6 +11,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.scheduler.BukkitTask;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.GameMap;
@@ -18,7 +19,6 @@ import net.amoebaman.gamemasterv3.api.TeamAutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.gamemasterv3.enums.Team;
-import net.amoebaman.gamemasterv3.modules.TimerModule;
 import net.amoebaman.gamemasterv3.util.PropertySet;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.kitmaster.controllers.ItemController;
@@ -50,25 +50,30 @@ public class CommandListener{
 		if(master.getState() == GameState.INTERMISSION)
 			return new Message(Scheme.ERROR).then("There isn't a game running");
 		
-		Player player = sender instanceof Player ? (Player) sender : null;
+		final Player player = sender instanceof Player ? (Player) sender : null;
 		
-		List<Object> status = Lists.newArrayList((Object) new Message(Scheme.HIGHLIGHT).t("Currently playing ").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s());
+		master.sendStatusHolo(sender);
 		
-		if(master.getActiveGame() instanceof TeamAutoGame && player != null && master.getState(player) == PlayerState.PLAYING){
-			Team team = ((TeamAutoGame) master.getActiveGame()).getTeam(player);
-			status.add(new Message(Scheme.HIGHLIGHT).t("You are on the ").t(team).color(team.chat).t(" team").toString());
+		if(player != null){
+			
+			final BukkitTask moveTask = Bukkit.getScheduler().runTaskTimer(master, new Runnable(){ public void run(){
+				/*
+				 * Update hologram
+				 */
+				master.moveStatusHolo(player);
+			}}, 0L, 1L);
+			
+			Bukkit.getScheduler().runTaskLater(master, new Runnable(){ public void run(){
+				/*
+				 * Kill hologram
+				 */
+				master.removeStatusHolo(player);
+				moveTask.cancel();
+			}}, 100L);
+			
 		}
 		
-		status.addAll(master.getActiveGame().getStatusMessages(player));
-		
-		if(master.getActiveGame() instanceof TimerModule){
-			long millis = ((TimerModule) master.getActiveGame()).getGameLength() * 60 * 1000 - (System.currentTimeMillis() - master.getGameStart());
-			int seconds = Math.round(millis / 1000F);
-			int mins = seconds / 60;
-			status.add(new Message(Scheme.NORMAL).then(mins).strong().then(" minutes and ").then(seconds % 60).strong().then(" seconds remain").toString());
-		}
-		
-		return Align.addSpacers("", Align.center(status));
+		return null;
 	}
 	
 	@CommandHandler(cmd = "vote")
