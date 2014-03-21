@@ -1,5 +1,6 @@
 package net.amoebaman.gamemasterv3;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -131,14 +132,22 @@ public class GameTicker implements Runnable{
 			master.log("Updating player colors");
 		for(Player player : master.getPlayers())
 			master.getPlayerManager().updateColors(player);
-		/*
-		 * Kick AFK suckers
-		 */
-		for(Player player : master.getPlayers())
+		for(Player player : master.getPlayers()){
+			/*
+			 * Kick AFK suckers
+			 */
 			if(master.getPlayerManager().getTimeSinceLastMovement(player) > 5 * 60 * 1000){
 				player.kickPlayer("You've been AFK for too long (5 minutes)");
 				master.getPlayerManager().resetMovementStamp(player);
 			}
+			/*
+			 * Prevent NaN health glitch
+			 */
+			if(Double.isNaN(player.getHealth())){
+				player.setHealth(0);
+				Bukkit.getLogger().severe("Player " + player.getName() + " had NaN health");
+			}
+		}
 		/*
 		 * Turn off the debug cycle
 		 */
