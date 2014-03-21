@@ -211,7 +211,7 @@ public class GameMaster extends JavaPlugin{
 		 */
 		try{
 			getConfig().set("locations/lobby", S_Loc.stringSave(lobby, true, true));
-			getConfig().set("locations/fireworks", S_Loc.stringSave(lobby, true, false));
+			getConfig().set("locations/fireworks", S_Loc.stringSave(fireworks, true, false));
 			getConfig().set("locations/welcome", S_Loc.stringSave(welcome, true, true));
 			getConfig().save(configFile);
 			
