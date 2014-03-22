@@ -13,7 +13,7 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
-import com.dthielke.herochat.Channel;
+import com.dthielke.herochat.*;
 
 import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.modules.RespawnModule;
@@ -38,7 +38,7 @@ public abstract class TeamAutoGame extends AutoGame{
 	private static boolean balance = true;
 	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
 	private PlayerMap<Team> teams = new PlayerMap<Team>();
-	private Map<Team, Channel> channels;
+	private Map<Team, Channel> channels = new HashMap<Team, Channel>();
 	//TODO join and leave team channels
 	
 	/**
@@ -142,6 +142,9 @@ public abstract class TeamAutoGame extends AutoGame{
 	 * @param team a team
 	 */
 	public void setTeam(Player player, Team team){
+		Chatter chatter = Herochat.getChatterManager().addChatter(player);
+		for(Channel chan : channels.values())
+			chatter.removeChannel(chan, false, true);
 		if(team == null){
 			teams.remove(player);
 			org.bukkit.scoreboard.Team bTeam = getBoard().getPlayerTeam(player);
@@ -151,6 +154,7 @@ public abstract class TeamAutoGame extends AutoGame{
 		else{
 			teams.put(player, team);
 			team.getBukkitTeam().addPlayer(player);
+			chatter.addChannel(getChannel(team), false, true);
 		}
 	}
 	
@@ -175,10 +179,22 @@ public abstract class TeamAutoGame extends AutoGame{
 	 * @return the team's chat channel
 	 */
 	public Channel getChannel(Team team){
-		if(team == null || !channels.containsKey(team))
+		if(team == null)
 			return master.getMainChannel();
-		else
+		else{
+			if(!channels.containsKey(team)){
+				ChannelManager hc = Herochat.getChannelManager();
+				Channel teamChannel = hc.getChannel(team + "Team");
+				if(teamChannel == null){
+					teamChannel = new StandardChannel(hc.getStorage(), team + "Team", team.toString(), hc.getDefaultChannel().getFormatSupplier());
+					teamChannel.setColor(team.chat);
+					teamChannel.setVerbose(false);
+					hc.addChannel(teamChannel);
+				}
+				channels.put(team, teamChannel);
+			}
 			return channels.get(team);
+		}
 	}
 	
 	/**

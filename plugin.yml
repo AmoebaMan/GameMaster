@@ -96,24 +96,19 @@ commands:
 permissions:
   gamemaster.globalkit:
     description: Allows users to take kits from anywhere in the map
-  gamemaster.autoexit:
-    description: Allows joining players to automatically exit
-    children:
-      gamemaster.exit: true
   gamemaster.moderator:
     description: Permissions group for GameMaster moderators
     children:
       gamemaster.end: true
       gamemaster.nextgame: true
       gamemaster.nextmap: true
-      gamemaster.autoexit: true
   gamemaster.admin:
     description: Permissions group for GameMaster administrators
     default: op
     children:
       gamemaster.moderator: true
-      gamemaster.spectate: true
-      gamemaster.exit: true
+      gamemaster.watch: true
+      gamemaster.leave: true
       gamemaster.patch: true
       gamemaster.debug: true
       gamemaster.globalkit: true

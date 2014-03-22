@@ -1,8 +1,6 @@
 package net.amoebaman.gamemasterv3;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -21,7 +19,9 @@ import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import com.dthielke.herochat.ChannelChatEvent;
 import com.vexsoftware.votifier.model.Vote;
@@ -31,6 +31,7 @@ import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.TeamAutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
+import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.modules.RespawnModule;
 import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
 import net.amoebaman.kitmaster.enums.GiveKitContext;
@@ -232,6 +233,14 @@ public class EventListener implements Listener{
 		 */
 		if(master.getConfig().getBoolean("wrap-server", false)){
 			final Player player = event.getPlayer();
+			
+			event.setJoinMessage(
+				new Message(Scheme.HIGHLIGHT)
+					.t(player.getName()).s()
+					.t(" has joined the battle")
+					.toString()
+			);
+			
 			Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
 				if(master.getState() == GameState.INTERMISSION){
 					if(master.getActiveGame() == null)
@@ -274,7 +283,7 @@ public class EventListener implements Listener{
 						new Message(Scheme.HIGHLIGHT)
 						.t("In total, ")
 						.t(Bukkit.getOfflinePlayers().length + " unique players").s()
-						.t("have joined the server!")
+						.t(" have joined the server!")
 						);
 				}});
 			}
@@ -295,12 +304,36 @@ public class EventListener implements Listener{
 	public void playerQuit(PlayerQuitEvent event){
 		if(master.getConfig().getBoolean("wrap-server", false)){
 			Player player = event.getPlayer();
+
+			event.setQuitMessage(
+				new Message(Scheme.HIGHLIGHT)
+					.t(player.getName()).s()
+					.t(" has left the battle")
+					.toString()
+			);
+			
 			StatusBar.removeStatusBar(player);
 			if(master.getState() != GameState.INTERMISSION && master.getState(player) == PlayerState.PLAYING){
 				player.teleport(master.getLobby());
 				master.getActiveGame().leave(player);
 				master.getPlayerManager().resetPlayer(player);
 			}
+		}
+	}
+	
+	@EventHandler
+	public void playerKick(PlayerKickEvent event){
+		if(master.getConfig().getBoolean("wrap-server", false)){
+			Player player = event.getPlayer();
+
+			event.setLeaveMessage(
+				new Message(Scheme.HIGHLIGHT)
+					.t(player.getName()).s()
+					.t(" has fled the battle")
+					.toString()
+			);
+			
+			playerQuit(new PlayerQuitEvent(player, "redirect"));
 		}
 	}
 	
@@ -419,7 +452,8 @@ public class EventListener implements Listener{
 			event.setChannel(master.getMainChannel());
 			if(teamChatting.contains(player) && master.getState() != GameState.INTERMISSION && master.getActiveGame() instanceof TeamAutoGame){
 				TeamAutoGame game = (TeamAutoGame) master.getActiveGame();
-				event.setChannel(game.getChannel(game.getTeam(player)));
+				Team team = game.getTeam(player);
+				event.setChannel(game.getChannel(team));
 			}
 		}
 		if(master.getState(player) == PlayerState.WATCHING)
@@ -450,7 +484,20 @@ public class EventListener implements Listener{
 		}
 	}
 	
-	@SuppressWarnings("deprecation")
+	private Map<UUID, List<PotionEffect>> thrownEffects = new HashMap<UUID, List<PotionEffect>>();
+	@EventHandler
+	public void logPotionThrows(ProjectileLaunchEvent event){
+		if(event.getEntity() instanceof ThrownPotion && event.getEntity().getShooter() instanceof Player){
+			Player thrower = (Player) event.getEntity().getShooter();
+			if(master.getState(thrower) != PlayerState.PLAYING || master.getState() != GameState.RUNNING)
+				return;
+			ThrownPotion potion = (ThrownPotion) event.getEntity();
+			ItemStack item = thrower.getItemInHand();
+			if(item.hasItemMeta() && item.getItemMeta() instanceof PotionMeta && ((PotionMeta) item.getItemMeta()).hasCustomEffects())
+				thrownEffects.put(potion.getUniqueId(), ((PotionMeta) item.getItemMeta()).getCustomEffects());
+		}
+	}
+	
 	@EventHandler
 	public void managePotionSplashes(PotionSplashEvent event){
 		ThrownPotion potion = event.getPotion();
@@ -463,9 +510,20 @@ public class EventListener implements Listener{
 		 * Check to see if this potion is harmful
 		 */
 		boolean harmful = false;
-		List<Integer> ids = Lists.newArrayList(2,4,7,9,15,17,18,19,20);
-		for(PotionEffect effect : potion.getEffects())
-			if(ids.contains(effect.getType().getId()))
+		List<PotionEffectType> harms = Lists.newArrayList(
+			PotionEffectType.BLINDNESS,
+			PotionEffectType.CONFUSION,
+			PotionEffectType.HARM,
+			PotionEffectType.HUNGER,
+			PotionEffectType.POISON,
+			PotionEffectType.SLOW,
+			PotionEffectType.SLOW_DIGGING,
+			PotionEffectType.WEAKNESS,
+			PotionEffectType.WITHER
+		);
+		List<PotionEffect> effects = thrownEffects.remove(potion.getUniqueId());
+		for(PotionEffect effect : effects)
+			if(harms.contains(effect.getType()))
 				harmful = true;
 		/*
 		 * We don't actually care if it's not harmful

@@ -223,9 +223,9 @@ public class GameMaster extends JavaPlugin{
 		 * Save the configs
 		 */
 		try{
-			getConfig().set("locations/lobby", S_Loc.stringSave(lobby, true, true));
-			getConfig().set("locations/fireworks", S_Loc.stringSave(fireworks, true, false));
-			getConfig().set("locations/welcome", S_Loc.stringSave(welcome, true, true));
+			getConfig().set("locations.lobby", S_Loc.stringSave(lobby, true, true));
+			getConfig().set("locations.fireworks", S_Loc.stringSave(fireworks, true, false));
+			getConfig().set("locations.welcome", S_Loc.stringSave(welcome, true, true));
 			getConfig().save(configFile);
 			YamlConfiguration mapYaml = new YamlConfiguration();
 			mapYaml.options().pathSeparator('/');
@@ -519,15 +519,23 @@ public class GameMaster extends JavaPlugin{
 		/*
 		 * TODO Update chat channels
 		 */
-		Chatter chatter = Herochat.getChatterManager().getChatter(player);
+		Chatter chatter = Herochat.getChatterManager().addChatter(player);
 		if(newState == PlayerState.PLAYING){
-			
+			chatter.addChannel(gameChannel, false, true);
+			chatter.setActiveChannel(gameChannel, false, true);
+			chatter.removeChannel(spectatorChannel, false, true);
 		}
 		if(newState == PlayerState.WATCHING){
-			
+			chatter.addChannel(gameChannel, false, true);
+			chatter.addChannel(spectatorChannel, false, true);
+			chatter.setActiveChannel(spectatorChannel, false, true);
 		}
 		if(newState == PlayerState.EXTERIOR){
-			
+			if(getConfig().getBoolean("wrap-server"))
+				chatter.addChannel(gameChannel, false, true);
+			else
+				chatter.removeChannel(gameChannel, false, true);
+			chatter.removeChannel(spectatorChannel, false, true);
 		}
 		/*
 		 * Update visibilities
@@ -765,7 +773,7 @@ public class GameMaster extends JavaPlugin{
 	 */
 	public void broadcast(Object... messages){
 		for(Player player : Bukkit.getOnlinePlayers())
-			if(getState(player) != PlayerState.EXTERIOR)
+			if(getConfig().getBoolean("wrap-server") || getState(player) != PlayerState.EXTERIOR)
 				Chat.send(player, messages);
 		Chat.send(Bukkit.getConsoleSender(), messages);
 	}
