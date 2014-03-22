@@ -25,7 +25,6 @@ import org.bukkit.util.Vector;
 
 import com.dsh105.holoapi.HoloAPI;
 import com.dsh105.holoapi.api.Hologram;
-import com.dsh105.holoapi.api.HologramFactory;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.GameMap;
@@ -204,8 +203,6 @@ public class GameMaster extends JavaPlugin{
 		 * Remove all funky packet things
 		 */
 		StatusBar.removeAllStatusBars();
-		for(Player player : Bukkit.getOnlinePlayers())
-			removeStatusHolo(player);
 		/*
 		 * Save the configs
 		 */
@@ -740,33 +737,26 @@ public class GameMaster extends JavaPlugin{
 		
 		if(player == null)
 			Chat.send(sender, status);
-		else{
-			removeStatusHolo(player);
-			Hologram holo = new HologramFactory(this)
-			.withLocation(Utils.getHoloHudLoc(player).add(new Vector(0, 0.25 * status.size(), 0)))
-			.withText(status.toArray(new String[0]))
-			.build();
+		else if(!statusHolos.containsKey(player)){
+			Hologram holo = HoloAPI.getManager().createSimpleHologram(
+				Utils.getHoloHudLoc(player), 
+				5, 
+				status
+			);
 			holo.clearAllPlayerViews();
 			holo.show(player);
 			statusHolos.put(player, holo);
+			Bukkit.getScheduler().runTaskLater(this, new Runnable(){ public void run(){
+				statusHolos.remove(player);
+			}}, 5*20);
 		}
 	}
 	
 	protected void moveStatusHolo(Player player){
 		if(statusHolos.containsKey(player))
-			statusHolos.get(player).move(player, Utils.getHoloHudLoc(player).toVector().add(new Vector(0, 0.25 * statusHolos.get(player).getLines().length, 0)));
+			statusHolos.get(player).move(Utils.getHoloHudLoc(player).add(new Vector(0, 0.25 * statusHolos.get(player).getLines().length, 0)));
 	}
-	
-	protected void removeStatusHolo(Player player){
-		if(statusHolos.containsKey(player)){
-			Hologram holo = statusHolos.get(player);
-			holo.clearAllPlayerViews();
-			HoloAPI.getManager().stopTracking(holo);
-			HoloAPI.getManager().clearFromFile(holo.getSaveId());
-			statusHolos.remove(player);
-		}
-	}
-	
+		
 	protected ItemStack getHoloItem(){
 		return holoHoldItem.clone();
 	}

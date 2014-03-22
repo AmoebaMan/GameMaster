@@ -492,8 +492,6 @@ public class EventListener implements Listener{
 		ItemStack newItem = player.getInventory().getItem(event.getNewSlot());
 		if(master.getHoloItem().isSimilar(newItem))
 			master.sendStatusHolo(player);
-		else
-			master.removeStatusHolo(player);
 	}
 	
 	@EventHandler
@@ -509,7 +507,6 @@ public class EventListener implements Listener{
 		 * Remove fancy packet stuff
 		 */
 		StatusBar.removeStatusBar(event.getEntity());
-		master.removeStatusHolo(event.getEntity());
 	}
 	
 }
