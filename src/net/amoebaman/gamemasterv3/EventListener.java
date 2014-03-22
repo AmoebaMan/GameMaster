@@ -275,18 +275,20 @@ public class EventListener implements Listener{
 			else if(!player.hasPlayedBefore()){
 				master.setState(player, PlayerState.EXTERIOR);
 				player.teleport(master.getWelcome());
-				Bukkit.getScheduler().runTask(master, new Runnable(){ public void run(){
-					master.broadcast(
-						new Message(Scheme.HIGHLIGHT)
+				event.setJoinMessage(
+					new Message(Scheme.HIGHLIGHT)
 						.t(player.getName()).s()
-						.t(" has joined the server for the first time!  Everybody give them a huge welcome!"),
-						new Message(Scheme.HIGHLIGHT)
+						.t(" has joined the server for the first time!  Everybody give them a huge welcome!")
+						.toString()
+				);
+				Bukkit.getScheduler().runTask(master, new Runnable(){ public void run(){
+					new Message(Scheme.HIGHLIGHT)
 						.t("In total, ")
 						.t(Bukkit.getOfflinePlayers().length + " unique players").s()
 						.t(" have joined the server!")
-						);
+						.broadcast();
 				}});
-			}
+		}
 			/*
 			 * Otherwise, just shove them headfirst into the games
 			 */
