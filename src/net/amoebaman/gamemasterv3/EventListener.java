@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -24,6 +23,7 @@ import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 
+import com.dthielke.herochat.ChannelChatEvent;
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 
@@ -267,15 +267,15 @@ public class EventListener implements Listener{
 				master.setState(player, PlayerState.EXTERIOR);
 				player.teleport(master.getWelcome());
 				Bukkit.getScheduler().runTask(master, new Runnable(){ public void run(){
-					new Message(Scheme.HIGHLIGHT)
+					master.broadcast(
+						new Message(Scheme.HIGHLIGHT)
 						.t(player.getName()).s()
-						.t(" has joined the server for the first time!  Everybody give them a huge welcome!")
-						.broadcast();
-					new Message(Scheme.HIGHLIGHT)
+						.t(" has joined the server for the first time!  Everybody give them a huge welcome!"),
+						new Message(Scheme.HIGHLIGHT)
 						.t("In total, ")
 						.t(Bukkit.getOfflinePlayers().length + " unique players").s()
 						.t("have joined the server!")
-						.broadcast();
+						);
 				}});
 			}
 			/*
@@ -412,21 +412,18 @@ public class EventListener implements Listener{
 			}
 	}
 	
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void teamChat(AsyncPlayerChatEvent event){
-		Player player = event.getPlayer();
-		if(teamChatting.contains(player) && master.getState(player) == PlayerState.PLAYING && master.getState() != GameState.INTERMISSION && master.getActiveGame() instanceof TeamAutoGame){
-			TeamAutoGame game = (TeamAutoGame) master.getActiveGame();
-			for(Player other : Bukkit.getOnlinePlayers())
-				if(game.getTeam(player) != game.getTeam(other))
-					event.getRecipients().remove(other);
-			event.setMessage("(" + game.getTeam(player).chat + "TEAM" + ChatColor.WHITE + ") " + event.getMessage());
+	@EventHandler
+	public void chatManagement(ChannelChatEvent event){
+		Player player = event.getSender().getPlayer();
+		if(master.getState(player) == PlayerState.PLAYING){
+			event.setChannel(master.getMainChannel());
+			if(teamChatting.contains(player) && master.getState() != GameState.INTERMISSION && master.getActiveGame() instanceof TeamAutoGame){
+				TeamAutoGame game = (TeamAutoGame) master.getActiveGame();
+				event.setChannel(game.getChannel(game.getTeam(player)));
+			}
 		}
-		if(master.getState(player) == PlayerState.WATCHING){
-			for(Player playing : master.getPlayers())
-				event.getRecipients().remove(playing);
-			event.setMessage("(" + ChatColor.DARK_GRAY + "SPECTATOR" + ChatColor.WHITE + ") " + event.getMessage());
-		}
+		if(master.getState(player) == PlayerState.WATCHING)
+			event.setChannel(master.getSpectatorChannel());
 	}
 	
 	@EventHandler
@@ -443,12 +440,13 @@ public class EventListener implements Listener{
 		if(player.hasPlayedBefore() || player.isOnline()){
 			StatMaster.getHandler().incrementStat(player, "charges");
 			StatMaster.getHandler().incrementCommunityStat("votes");
-			new Message(Scheme.HIGHLIGHT)
-			.t(player.getName()).s()
-			.t(" voted for the server, and now has ")
-			.t(StatMaster.getHandler().getStat(player, "charges")).s()
-			.t(" charges")
-			.broadcast();
+			master.broadcast(
+				new Message(Scheme.HIGHLIGHT)
+				.t(player.getName()).s()
+				.t(" voted for the server, and now has ")
+				.t(StatMaster.getHandler().getStat(player, "charges")).s()
+				.t(" charges")
+				);
 		}
 	}
 	
@@ -486,6 +484,9 @@ public class EventListener implements Listener{
 				}
 	}
 	
+	/*
+	 * TODO make this a right-click event
+	 */
 	@EventHandler
 	public void holoHoldItems(PlayerItemHeldEvent event){
 		Player player = event.getPlayer();

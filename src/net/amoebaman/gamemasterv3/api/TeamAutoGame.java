@@ -1,9 +1,6 @@
 package net.amoebaman.gamemasterv3.api;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.bukkit.*;
 import org.bukkit.FireworkEffect.Type;
@@ -15,6 +12,8 @@ import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
+
+import com.dthielke.herochat.Channel;
 
 import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.modules.RespawnModule;
@@ -37,6 +36,10 @@ import net.amoebaman.utils.maps.PlayerMap;
 public abstract class TeamAutoGame extends AutoGame{
 	
 	private static boolean balance = true;
+	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
+	private PlayerMap<Team> teams = new PlayerMap<Team>();
+	private Map<Team, Channel> channels;
+	//TODO join and leave team channels
 	
 	/**
 	 * Gets whether or not team balancing is currently enabled.
@@ -47,9 +50,6 @@ public abstract class TeamAutoGame extends AutoGame{
 		return balance;
 	}
 	
-	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
-	private PlayerMap<Team> teams = new PlayerMap<Team>();
-	
 	/**
 	 * Turns team balancing on or off.
 	 * 
@@ -59,10 +59,21 @@ public abstract class TeamAutoGame extends AutoGame{
 		TeamAutoGame.balance = balance;
 	}
 	
+	/**
+	 * Gets the scoreboard that displays this game's score.
+	 * 
+	 * @return the scoreboard
+	 */
 	public static Scoreboard getBoard(){
 		return Bukkit.getScoreboardManager().getMainScoreboard();
 	}
 	
+	/**
+	 * Gets the objective on the scoreboard (see {@link #getBoard()}) that keeps
+	 * track of all teams' scores.
+	 * 
+	 * @return the objective
+	 */
 	public static Objective getScoreObj(){
 		Objective score = getBoard().getObjective("score");
 		if(score == null){
@@ -114,6 +125,12 @@ public abstract class TeamAutoGame extends AutoGame{
 		return set;
 	}
 	
+	/**
+	 * Gets a player's team.
+	 * 
+	 * @param player a player
+	 * @return the player's team
+	 */
 	public Team getTeam(Player player){
 		return teams.get(player);
 	}
@@ -149,6 +166,19 @@ public abstract class TeamAutoGame extends AutoGame{
 			if(getTeam(each) == team)
 				set.add(each);
 		return set;
+	}
+	
+	/**
+	 * Gets the chat channel reserved for this team's private communications.
+	 * 
+	 * @param team a team
+	 * @return the team's chat channel
+	 */
+	public Channel getChannel(Team team){
+		if(team == null || !channels.containsKey(team))
+			return master.getMainChannel();
+		else
+			return channels.get(team);
 	}
 	
 	/**
@@ -361,9 +391,8 @@ public abstract class TeamAutoGame extends AutoGame{
 				winner = team;
 				maxScore = getScore(team);
 			}
-			else
-				if(getScore(team) == maxScore)
-					winner = Team.NEUTRAL;
+			else if(getScore(team) == maxScore)
+				winner = Team.NEUTRAL;
 		}
 		return winner;
 	}
@@ -501,5 +530,4 @@ public abstract class TeamAutoGame extends AutoGame{
 	public int getRespawnInvuln(Player player){
 		return 5;
 	}
-	
 }

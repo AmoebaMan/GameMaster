@@ -25,6 +25,7 @@ import org.bukkit.util.Vector;
 
 import com.dsh105.holoapi.HoloAPI;
 import com.dsh105.holoapi.api.Hologram;
+import com.dthielke.herochat.*;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.GameMap;
@@ -55,33 +56,25 @@ import net.minecraft.util.com.google.common.collect.Lists;
 public class GameMaster extends JavaPlugin{
 	
 	private static GameMaster INSTANCE;
-	
 	private File configFile, mapsFile, repairFile;
-	
 	private StringMap<AutoGame> games = new StringMap<AutoGame>();
 	private StringMap<GameMap> maps = new StringMap<GameMap>();
-	
 	private PlayerMap<PlayerState> players = new PlayerMap<PlayerState>(PlayerState.EXTERIOR);
 	private PlayerMap<String> votes = new PlayerMap<String>("");
-	
-	private PlayerMap<Hologram> statusHolos = new PlayerMap<Hologram>();
-	private ItemStack holoHoldItem;
-	
 	private AutoGame activeGame;
 	private GameMap activeMap, editMap;
-	
 	private Location lobby, fireworks, welcome;
-	
 	private int tickTaskId = 0;
-	
 	private GameState state = GameState.INTERMISSION;
 	private long gameStart = 0L;
-	
 	private CommandListener commands;
 	private EventListener events;
 	private GameTicker ticker;
 	private Progression progression;
 	private Players playerManager;
+	private PlayerMap<Hologram> statusHolos = new PlayerMap<Hologram>();
+	private ItemStack holoHoldItem;
+	private Channel gameChannel, spectatorChannel;
 	
 	public void onEnable(){
 		INSTANCE = this;
@@ -111,7 +104,6 @@ public class GameMaster extends JavaPlugin{
 			getConfig().options().copyDefaults(true);
 			getConfig().options().copyHeader(true);
 			getConfig().save(configFile);
-			
 			lobby = S_Loc.stringLoad(getConfig().getString("locations.lobby"));
 			if(lobby == null)
 				lobby = new Location(Bukkit.getWorlds().get(0), 0.5, 80, 0.5);
@@ -144,17 +136,6 @@ public class GameMaster extends JavaPlugin{
 			e.printStackTrace();
 		}
 		/*
-		 * Update player states and such
-		 */
-		if(getConfig().getBoolean("wrap-server", false)){
-			players = new PlayerMap<PlayerState>(PlayerState.PLAYING);
-			for(Player each : Bukkit.getOnlinePlayers())
-				if(each.hasPermission("gamemaster.admin"))
-					setState(each, PlayerState.EXTERIOR);
-				else
-					setState(each, PlayerState.PLAYING);
-		}
-		/*
 		 * Register statistics
 		 */
 		StatMaster.getHandler().registerStat(new Statistic("Wins", 0, "games", "default"));
@@ -169,10 +150,33 @@ public class GameMaster extends JavaPlugin{
 		meta.setDisplayName(ChatColor.DARK_RED + "Game Status");
 		meta.setLore(Lists.newArrayList(ChatColor.GOLD + "Hold to view game status"));
 		holoHoldItem.setItemMeta(meta);
-		Bukkit.getScheduler().runTaskTimer(this, new Runnable(){ public void run(){
-			for(Player player : Bukkit.getOnlinePlayers())
-				moveStatusHolo(player);
-		}}, 0L, 1L);
+		Bukkit.getScheduler().runTaskTimer(this, new Runnable(){
+			
+			public void run(){
+				for(Player player : Bukkit.getOnlinePlayers())
+					moveStatusHolo(player);
+			}
+		}, 0L, 1L);
+		/*
+		 * Set up Herochat stuff
+		 */
+		ChannelManager hc = Herochat.getChannelManager();
+		gameChannel = getConfig().getBoolean("wrap-server")
+						? hc.getDefaultChannel()
+						: hc.getChannel("gamemaster");
+		if(gameChannel == null){
+			gameChannel = new StandardChannel(hc.getStorage(), "gamemaster", "gm", hc.getDefaultChannel().getFormatSupplier());
+			gameChannel.setColor(ChatColor.WHITE);
+			gameChannel.setVerbose(false);
+			hc.addChannel(gameChannel);
+		}
+		spectatorChannel = hc.getChannel("spectator");
+		if(spectatorChannel == null){
+			spectatorChannel = new StandardChannel(hc.getStorage(), "spectator", "spc", hc.getDefaultChannel().getFormatSupplier());
+			spectatorChannel.setColor(ChatColor.GRAY);
+			spectatorChannel.setVerbose(false);
+			hc.addChannel(spectatorChannel);
+		}
 		/*
 		 * Start the ticker
 		 */
@@ -180,6 +184,7 @@ public class GameMaster extends JavaPlugin{
 		tickTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, ticker, 0, 5L);
 		/*
 		 * Do scoreboard stuff
+		 * TODO make this non-server-wrap compatible
 		 */
 		Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
 		Objective health = board.getObjective("health");
@@ -187,6 +192,17 @@ public class GameMaster extends JavaPlugin{
 			health = board.registerNewObjective("health", Criterias.HEALTH);
 			health.setDisplaySlot(DisplaySlot.BELOW_NAME);
 			health.setDisplayName("HP");
+		}
+		/*
+		 * Update player states and such
+		 */
+		if(getConfig().getBoolean("wrap-server", false)){
+			players = new PlayerMap<PlayerState>(PlayerState.PLAYING);
+			for(Player each : Bukkit.getOnlinePlayers())
+				if(each.hasPermission("gamemaster.admin"))
+					setState(each, PlayerState.EXTERIOR);
+				else
+					setState(each, PlayerState.PLAYING);
 		}
 		/*
 		 * Start the ball rolling
@@ -211,7 +227,6 @@ public class GameMaster extends JavaPlugin{
 			getConfig().set("locations/fireworks", S_Loc.stringSave(fireworks, true, false));
 			getConfig().set("locations/welcome", S_Loc.stringSave(welcome, true, true));
 			getConfig().save(configFile);
-			
 			YamlConfiguration mapYaml = new YamlConfiguration();
 			mapYaml.options().pathSeparator('/');
 			for(GameMap each : maps.values())
@@ -357,7 +372,6 @@ public class GameMaster extends JavaPlugin{
 		 */
 		for(BlockState state : states)
 			repairYaml.set(S_Loc.stringSave(state.getLocation(), true, false), state.getTypeId() + ":" + state.getRawData());
-		
 		try{
 			repairYaml.save(repairFile);
 		}
@@ -491,9 +505,8 @@ public class GameMaster extends JavaPlugin{
 			else
 				activeGame.leave(player);
 		}
-		else
-			if(newState != PlayerState.EXTERIOR)
-				player.teleport(lobby);
+		else if(newState != PlayerState.EXTERIOR)
+			player.teleport(lobby);
 		/*
 		 * Update game modes
 		 */
@@ -502,6 +515,19 @@ public class GameMaster extends JavaPlugin{
 		if(newState == PlayerState.WATCHING){
 			player.setGameMode(GameMode.CREATIVE);
 			player.getInventory().addItem(getHoloItem());
+		}
+		/*
+		 * TODO Update chat channels
+		 */
+		Chatter chatter = Herochat.getChatterManager().getChatter(player);
+		if(newState == PlayerState.PLAYING){
+			
+		}
+		if(newState == PlayerState.WATCHING){
+			
+		}
+		if(newState == PlayerState.EXTERIOR){
+			
 		}
 		/*
 		 * Update visibilities
@@ -684,29 +710,13 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	protected void sendStatusHolo(CommandSender sender){
-		
 		final Player player = sender instanceof Player ? (Player) sender : null;
-		
 		List<String> status = Lists.newArrayList();
-		
 		if(getState() != GameState.INTERMISSION){
-			status.add(
-				new Message(Scheme.HIGHLIGHT)
-				.t("Playing ")
-				.t(getActiveGame()).s()
-				.t(" on ")
-				.t(getActiveMap()).s()
-				.getText()
-			);
+			status.add(new Message(Scheme.HIGHLIGHT).t("Playing ").t(getActiveGame()).s().t(" on ").t(getActiveMap()).s().getText());
 			if(getActiveGame() instanceof TeamAutoGame && player != null && getState(player) == PlayerState.PLAYING){
 				Team team = ((TeamAutoGame) getActiveGame()).getTeam(player);
-				status.add(
-					new Message(Scheme.HIGHLIGHT)
-					.t("You're on the ")
-					.t(team).color(team.chat)
-					.t(" team")
-					.getText()
-					);
+				status.add(new Message(Scheme.HIGHLIGHT).t("You're on the ").t(team).color(team.chat).t(" team").getText());
 			}
 			for(Object msg : getActiveGame().getStatusMessages(player))
 				if(msg instanceof Message)
@@ -717,38 +727,24 @@ public class GameMaster extends JavaPlugin{
 				long millis = ((TimerModule) getActiveGame()).getGameLength() * 60 * 1000 - (System.currentTimeMillis() - getGameStart());
 				int seconds = Math.round(millis / 1000F);
 				int mins = seconds / 60;
-				status.add(
-					new Message(Scheme.NORMAL)
-					.t(mins).s()
-					.t(" minutes and ")
-					.t(seconds % 60).s()
-					.t(" seconds remain")
-					.getText()
-					);
+				status.add(new Message(Scheme.NORMAL).t(mins).s().t(" minutes and ").t(seconds % 60).s().t(" seconds remain").getText());
 			}
 		}
 		else
-			status.add(
-				new Message(Scheme.WARNING)
-				.t("No game is playing right now")
-				.getText()
-			);
-			
-		
+			status.add(new Message(Scheme.WARNING).t("No game is playing right now").getText());
 		if(player == null)
 			Chat.send(sender, status);
 		else if(!statusHolos.containsKey(player)){
-			Hologram holo = HoloAPI.getManager().createSimpleHologram(
-				Utils.getHoloHudLoc(player), 
-				5, 
-				status
-			);
+			Hologram holo = HoloAPI.getManager().createSimpleHologram(Utils.getHoloHudLoc(player), 5, status);
 			holo.clearAllPlayerViews();
 			holo.show(player);
 			statusHolos.put(player, holo);
-			Bukkit.getScheduler().runTaskLater(this, new Runnable(){ public void run(){
-				statusHolos.remove(player);
-			}}, 5*20);
+			Bukkit.getScheduler().runTaskLater(this, new Runnable(){
+				
+				public void run(){
+					statusHolos.remove(player);
+				}
+			}, 5 * 20);
 		}
 	}
 	
@@ -756,9 +752,40 @@ public class GameMaster extends JavaPlugin{
 		if(statusHolos.containsKey(player))
 			statusHolos.get(player).move(Utils.getHoloHudLoc(player).add(new Vector(0, 0.25 * statusHolos.get(player).getLines().length, 0)));
 	}
-		
+	
 	protected ItemStack getHoloItem(){
 		return holoHoldItem.clone();
 	}
 	
+	/**
+	 * Broadcasts a message to all players involved in the game, i.e. players
+	 * and specatators.
+	 * 
+	 * @param messages some messages
+	 */
+	public void broadcast(Object... messages){
+		for(Player player : Bukkit.getOnlinePlayers())
+			if(getState(player) != PlayerState.EXTERIOR)
+				Chat.send(player, messages);
+		Chat.send(Bukkit.getConsoleSender(), messages);
+	}
+	
+	/**
+	 * Gets the main channel that all players not in team chat will chat in.
+	 * 
+	 * @return the main channel
+	 */
+	public Channel getMainChannel(){
+		return gameChannel;
+	}
+	
+	/**
+	 * Gets the chat channel reserved for spectators (to avoid players hearing
+	 * specatator chatter).
+	 * 
+	 * @return the spectator channel
+	 */
+	public Channel getSpectatorChannel(){
+		return spectatorChannel;
+	}
 }

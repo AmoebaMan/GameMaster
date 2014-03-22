@@ -2,7 +2,7 @@ main: net.amoebaman.gamemasterv3.GameMaster
 
 name: GameMaster
 version: 3.0
-depend: [KitMaster, StatMaster]
+depend: [KitMaster, StatMaster, Herochat]
 loadbefore: [CommandBook]
 author: AmoebaMan
 description: Schedules and runs autonomous events/minigames
