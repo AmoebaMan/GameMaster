@@ -2,4 +2,7 @@ timing:
     intermission: 90
     game-voting: 30
     map-voting: 30
+currency:
+    cost-to-charge: 1
+    reward-per-vote: 1
 wrap-server: false

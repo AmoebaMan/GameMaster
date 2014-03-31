@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
@@ -18,6 +17,8 @@ import net.amoebaman.gamemasterv3.api.TeamAutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.gamemasterv3.enums.Team;
+import net.amoebaman.gamemasterv3.softdepend.Depend;
+import net.amoebaman.gamemasterv3.softdepend.HerochatListener;
 import net.amoebaman.gamemasterv3.util.PropertySet;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.kitmaster.controllers.ItemController;
@@ -25,7 +26,6 @@ import net.amoebaman.kitmaster.enums.Attribute;
 import net.amoebaman.kitmaster.handlers.HistoryHandler;
 import net.amoebaman.kitmaster.handlers.KitHandler;
 import net.amoebaman.kitmaster.objects.Kit;
-import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.CommandController.CommandHandler;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.Align;
@@ -33,6 +33,7 @@ import net.amoebaman.utils.chat.Chat;
 import net.amoebaman.utils.chat.Message;
 import net.amoebaman.utils.chat.Scheme;
 
+import net.milkbowl.vault.economy.Economy;
 import net.minecraft.util.com.google.common.collect.Lists;
 
 public class CommandListener{
@@ -45,7 +46,7 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "game")
 	public Object gameCmd(CommandSender sender, String[] args){
-		master.sendStatusHolo(sender);
+		master.sendStatus(sender);
 		return null;
 	}
 	
@@ -119,68 +120,139 @@ public class CommandListener{
 		return KitHandler.getKitByIdentifier("C-" + normal.name);
 	}
 	
-	@CommandHandler(cmd = "charges")
+	@CommandHandler(cmd = "charge")
 	public Object chargesCmd(CommandSender sender, String[] args){
-		if(args == null || args.length < 1){
-			return Align.addSpacers("", Lists.newArrayList(new Message(Scheme.HIGHLIGHT).then("You have ").then(StatMaster.getHandler().getStat((Player) sender, "charges")).strong().then(" charges"), new Message(Scheme.HIGHLIGHT).then("Earn free charges by voting for us on server lists daily"), new Message(Scheme.HIGHLIGHT).then("  Click here to vote on PlanetMinecraft").link("http://bit.ly/landwarvotepmc"), new Message(Scheme.HIGHLIGHT).then("  Click here to vote on MineStatus").link("http://bit.ly/landwarvotems"), new Message(Scheme.HIGHLIGHT).then("  Check here to vote on MinecraftServerList").link("http://bit.ly/landwarvotemcsl"), new Message(Scheme.HIGHLIGHT).then("Use charges to power up your kits with ").then("/charges use").strong().tooltip(Scheme.NORMAL.normal + "Click here to use a charge").command("/charges use"), new Message(Scheme.HIGHLIGHT).then("Get info about a charged kit with ").then("/charges info <kit>").strong()));
-		}
-		if((args[0].equalsIgnoreCase("set") || args[0].equalsIgnoreCase("add")) && sender.hasPermission("gamemaster.admin")){
-			OfflinePlayer target = Bukkit.getPlayer(args[1]);
-			if(target == null)
-				target = Bukkit.getOfflinePlayer(args[1]);
-			if(!target.hasPlayedBefore())
-				return new Message(Scheme.ERROR).then("Could not find player");
-			int amount = Integer.parseInt(args[2]);
-			if(args[0].equalsIgnoreCase("set"))
-				StatMaster.getHandler().updateStat(target, "charges", amount);
-			else
-				StatMaster.getHandler().adjustStat(target, "charges", amount);
-			return new Message(Scheme.NORMAL).then(target.getName()).strong().then(" now has ").then(StatMaster.getHandler().getStat(target, "charges")).strong().then(" charges");
-		}
-		OfflinePlayer other = Bukkit.getOfflinePlayer(args[0]);
-		if(other.hasPlayedBefore())
-			return new Message(Scheme.NORMAL).then(other.getName()).strong().then(" has ").then(StatMaster.getHandler().getStat(other, "charges")).strong().then(" charges");
-		return null;
+		if(!Depend.hasEconomy() || !Depend.hasKitMaster())
+			return new Message(Scheme.ERROR)
+				.t("This feature is not available");
+		Economy econ = Depend.getEconomy();
+		return Align.addSpacers("", Lists.newArrayList(
+			new Message(Scheme.HIGHLIGHT)
+				.then("You have ")
+				.then(econ.getBalance(sender.getName())).strong()
+				.then(" " + econ.currencyNamePlural()),
+			new Message(Scheme.HIGHLIGHT)
+				.then("It costs ")
+				.then(master.getConfig().getDouble("currency.cost-to-charge")).s()
+				.then(" " + econ.currencyNamePlural() + " to charge a kit"),
+				/* 
+				 * TODO get rid of hardcoded links 
+				 */
+			new Message(Scheme.HIGHLIGHT)
+				.then("  Click here to vote on PlanetMinecraft")
+					.link("http://bit.ly/landwarvotepmc"),
+			new Message(Scheme.HIGHLIGHT)
+				.then("  Click here to vote on MineStatus")
+					.link("http://bit.ly/landwarvotems"),
+			new Message(Scheme.HIGHLIGHT)
+				.then("  Check here to vote on MinecraftServerList")
+					.link("http://bit.ly/landwarvotemcsl"),
+			new Message(Scheme.HIGHLIGHT)
+				.then("Use charges to power up your kits with ")
+				.then("/charges use").strong()
+					.tooltip(Scheme.NORMAL.normal + "Click here to use a charge")
+					.command("/charges use"),
+			new Message(Scheme.HIGHLIGHT)
+				.then("Get info about a charged kit with ")
+				.then("/charges info <kit>").strong()
+					.suggest("/charges info <kit>")
+		));
 	}
 	
-	@CommandHandler(cmd = "charges use")
+	@CommandHandler(cmd = "charge use")
 	public Object chargesUseCmd(Player player, String[] args){
-		if(StatMaster.getHandler().getStat(player, "charges") < 1)
-			return new Message(Scheme.ERROR).then("You don't have any charges");
+		/*
+		 * Make sure we've got the required dependencies
+		 */
+		if(!Depend.hasEconomy() || !Depend.hasKitMaster())
+			return new Message(Scheme.ERROR)
+				.t("This feature is not available");
+		Economy econ = Depend.getEconomy();
+		/*
+		 * Make sure they've got enough dough
+		 */
+		if(!econ.has(player.getName(), master.getConfig().getDouble("currency.cost-to-charge")))
+			return new Message(Scheme.ERROR).then("You don't have enough " + econ.currencyNamePlural());
+		/*
+		 * Can't charge up if you haven't taken a kit
+		 */
 		List<Kit> last = HistoryHandler.getHistory(player);
 		if(last == null || last.isEmpty())
 			return new Message(Scheme.ERROR).then("You haven't taken a kit to charge");
-		Kit charged = null;
+		/*
+		 * Get the charged up version of their most recent kit
+		 */
+		Kit recent = null;
 		for(Kit kit : last)
 			if(!kit.stringAttribute(Attribute.IDENTIFIER).contains("parent") && !kit.stringAttribute(Attribute.IDENTIFIER).contains("supplydrop"))
-				charged = getChargedKit(kit);
+				recent = kit;
+		Kit charged = getChargedKit(recent);
+		/*
+		 * Make sure we've got a valid state to charge up to
+		 */
 		if(charged == null)
 			return new Message(Scheme.ERROR).then("Your kit doesn't have a charged state available");
-		StatMaster.getHandler().adjustStat(player, "charges", -1);
+		/*
+		 * Subtract the currency and give them the charged kit
+		 */
+		econ.withdrawPlayer(player.getName(), master.getConfig().getDouble("currency.cost-to-charge"));
 		Actions.giveKit(player, charged, true);
-		return new Message(Scheme.NORMAL).then("You used a charge to power up your kit");
+		return new Message(Scheme.NORMAL).then("You charged ")
+				.t(recent.name)
+				.t(" up to ")
+				.t(charged.name);
 	}
 	
 	@CommandHandler(cmd = "charges info")
 	public Object chargesInfoCmd(Player sender, String[] args){
+		/*
+		 * Make sure we've got the required dependencies
+		 */
+		if(!Depend.hasEconomy() || !Depend.hasKitMaster())
+			return new Message(Scheme.ERROR)
+				.t("This feature is not available");
+		/*
+		 * Make sure they've specified a kit and that it's got a charged state
+		 */
 		if(args.length < 1)
 			return new Message(Scheme.ERROR).then("Name a kit to get info about its charged state");
 		Kit charged = getChargedKit(KitHandler.getKit(args[0]));
 		if(charged == null)
 			return new Message(Scheme.ERROR).then("That kit doesn't have an upgraded state available");
-		new Message(Scheme.NORMAL).then("Kit info for ").then(charged.name).strong().send(sender);
-		new Message(Scheme.NORMAL).then("Items:").send(sender);
+		/*
+		 * Print the info
+		 */
+		new Message(Scheme.NORMAL)
+			.then("Kit info for ")
+			.then(charged.name).strong()
+			.send(sender);
+		new Message(Scheme.NORMAL)
+			.then("Items:")
+			.send(sender);
 		for(ItemStack item : charged.items)
-			new Message(Scheme.NORMAL).then(" - " + ItemController.friendlyItemString(item)).itemTooltip(item).send(sender);
-		new Message(Scheme.NORMAL).then("Effects:").send(sender);
+			new Message(Scheme.NORMAL)
+			.then(" - " + ItemController.friendlyItemString(item))
+				.itemTooltip(item)
+			.send(sender);
+		new Message(Scheme.NORMAL)
+			.then("Effects:")
+			.send(sender);
 		for(PotionEffect effect : charged.effects)
-			new Message(Scheme.NORMAL).then(" - " + ItemController.friendlyEffectString(effect)).send(sender);
+			new Message(Scheme.NORMAL)
+				.then(" - " + ItemController.friendlyEffectString(effect))
+				.send(sender);
 		return null;
 	}
 	
 	@CommandHandler(cmd = "teamchat")
 	public Object teamchatCmd(Player player, String[] args){
-		return new Message(Scheme.NORMAL).then("Team-exclusive chatting is ").then(master.getListener().toggleTeamChat(player) ? "enabled" : "disabled").strong();
+		if(Depend.hasHerochat())
+			return new Message(Scheme.NORMAL)
+				.then("Team-exclusive chatting is ")
+				.then(HerochatListener.toggleTeamChat(player) ? "enabled" : "disabled").strong();
+		else
+			return new Message(Scheme.ERROR)
+				.then("Team chat is not available");
 	}
 	
 	@CommandHandler(cmd = "fixme")

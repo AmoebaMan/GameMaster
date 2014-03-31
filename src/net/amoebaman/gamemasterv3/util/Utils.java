@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import net.amoebaman.statmaster.StatMaster;
+import net.amoebaman.gamemasterv3.softdepend.Depend;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -69,13 +69,17 @@ public class Utils {
 	
 	public static class PlayerComparator implements Comparator<Player>{
 		public int compare(Player p1, Player p2) {
-			double elo1 = StatMaster.getHandler().getStat(p1, "elo skill");
-			double elo2 = StatMaster.getHandler().getStat(p2, "elo skill");
-			if(elo1 < elo2)
-				return -1;
-			if(elo1 > elo2)
-				return 1;
-			return 0;
+			if(Depend.hasStatMaster()){
+				double elo1 = Depend.getStats().getStat(p1, "elo skill");
+				double elo2 = Depend.getStats().getStat(p2, "elo skill");
+				if(elo1 < elo2)
+					return -1;
+				if(elo1 > elo2)
+					return 1;
+				return 0;
+			}
+			else
+				return p1.getName().compareTo(p2.getName());
 		}
 	}
 	

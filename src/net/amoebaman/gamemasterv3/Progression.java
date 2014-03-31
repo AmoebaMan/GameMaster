@@ -13,8 +13,8 @@ import org.bukkit.scoreboard.Team;
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.GameMap;
 import net.amoebaman.gamemasterv3.enums.GameState;
+import net.amoebaman.gamemasterv3.softdepend.Depend;
 import net.amoebaman.kitmaster.Actions;
-import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.Chat;
 import net.amoebaman.utils.chat.Message;
@@ -98,14 +98,10 @@ public class Progression{
 		 */
 		for(Player player : master.getPlayers()){
 			master.getPlayerManager().resetPlayer(player);
-			Actions.clearKits(player); // KitMaster hook
 			player.teleport(master.getLobby());
+			if(Depend.hasKitMaster())
+				Actions.clearKits(player); // KitMaster hook
 		}
-		/*
-		 * Increment community stat if this was a big game
-		 */
-		if(master.getPlayers().size() >= 16)
-			StatMaster.getHandler().incrementCommunityStat("big games");
 		/*
 		 * Update histories and such
 		 */

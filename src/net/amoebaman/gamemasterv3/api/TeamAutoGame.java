@@ -19,12 +19,14 @@ import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.modules.RespawnModule;
 import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
 import net.amoebaman.gamemasterv3.modules.TimerModule;
+import net.amoebaman.gamemasterv3.softdepend.Depend;
 import net.amoebaman.gamemasterv3.util.Utils;
-import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.GenUtil;
 import net.amoebaman.utils.chat.*;
 import net.amoebaman.utils.maps.DefaultedMap;
 import net.amoebaman.utils.maps.PlayerMap;
+
+import net.milkbowl.vault.economy.Economy;
 
 /**
  * A partially pre-implemented subclass of {@link AutoGame} that handles the
@@ -38,8 +40,7 @@ public abstract class TeamAutoGame extends AutoGame{
 	private static boolean balance = true;
 	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
 	private PlayerMap<Team> teams = new PlayerMap<Team>();
-	private Map<Team, Channel> channels = new HashMap<Team, Channel>();
-	//TODO join and leave team channels
+	private Map<Team, Channel> channels;
 	
 	/**
 	 * Gets whether or not team balancing is currently enabled.
@@ -142,9 +143,6 @@ public abstract class TeamAutoGame extends AutoGame{
 	 * @param team a team
 	 */
 	public void setTeam(Player player, Team team){
-		Chatter chatter = Herochat.getChatterManager().addChatter(player);
-		for(Channel chan : channels.values())
-			chatter.removeChannel(chan, false, true);
 		if(team == null){
 			teams.remove(player);
 			org.bukkit.scoreboard.Team bTeam = getBoard().getPlayerTeam(player);
@@ -154,7 +152,15 @@ public abstract class TeamAutoGame extends AutoGame{
 		else{
 			teams.put(player, team);
 			team.getBukkitTeam().addPlayer(player);
-			chatter.addChannel(getChannel(team), false, true);
+		}
+		if(Depend.hasHerochat()){
+			if(channels == null)
+				channels = new HashMap<Team, Channel>();
+			Chatter chatter = Herochat.getChatterManager().addChatter(player);		
+			for(Channel chan : channels.values())
+				chatter.removeChannel(chan, false, true);
+			if(team != null)
+				chatter.addChannel(getChannel(team), false, true);
 		}
 	}
 	
@@ -437,16 +443,29 @@ public abstract class TeamAutoGame extends AutoGame{
 		if(winner == null)
 			winner = Team.NEUTRAL;
 		/*
-		 * Increment game stats and award charges
+		 * Increment game stats
 		 */
-		for(Player player : master.getPlayers())
-			if(getTeam(player) == winner){
-				StatMaster.getHandler().incrementStat(player, "wins");
-				StatMaster.getHandler().adjustStat(player, "charges", 0.5);
-				new Message(Scheme.HIGHLIGHT).t("You have earned ").t("0.5 charges").s().tooltip(Chat.format("Total of &z" + StatMaster.getHandler().getStat(player, "charges"), Scheme.NORMAL)).t(" for winning the game").send(player);
+		if(Depend.hasStatMaster())
+			for(Player player : master.getPlayers())
+				if(getTeam(player) == winner)
+					Depend.getStats().incrementStat(player, "wins");
+				else
+					Depend.getStats().incrementStat(player, "losses");
+		/*
+		 * Award currency
+		 */
+		if(Depend.hasEconomy() && master.getConfig().getDouble("currency.win-reward") > 0){
+			Economy econ = Depend.getEconomy();
+			for(Player player : getPlayers(winner)){
+				econ.bankDeposit(player.getName(), master.getConfig().getDouble("currency.win-reward"));
+				new Message(Scheme.HIGHLIGHT)
+					.t("You've earned ")
+					.t(master.getConfig().getDouble("currency.win-reward") + " " + econ.currencyNamePlural()).s()
+						.tooltip(Chat.format("Total of &z" + econ.getBalance(player.getName()), Scheme.NORMAL))
+					.t(" for winning the game")
+					.send(player);
 			}
-			else
-				StatMaster.getHandler().incrementStat(player, "losses");
+		}
 		/*
 		 * Shoot of fireworks (just for shits and giggles)
 		 */

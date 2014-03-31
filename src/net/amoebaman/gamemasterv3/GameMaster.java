@@ -14,17 +14,12 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scoreboard.Criterias;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
-import org.bukkit.util.Vector;
 
-import com.dsh105.holoapi.HoloAPI;
-import com.dsh105.holoapi.api.Hologram;
 import com.dthielke.herochat.*;
 
 import net.amoebaman.gamemasterv3.api.AutoGame;
@@ -34,8 +29,7 @@ import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.modules.TimerModule;
-import net.amoebaman.gamemasterv3.util.Utils;
-import net.amoebaman.statmaster.StatMaster;
+import net.amoebaman.gamemasterv3.softdepend.*;
 import net.amoebaman.statmaster.Statistic;
 import net.amoebaman.utils.CommandController;
 import net.amoebaman.utils.S_Loc;
@@ -55,25 +49,51 @@ import net.minecraft.util.com.google.common.collect.Lists;
  */
 public class GameMaster extends JavaPlugin{
 	
+	/*
+	 * Internals
+	 */
 	private static GameMaster INSTANCE;
 	private File configFile, mapsFile, repairFile;
+	/*
+	 * Games and maps
+	 */
 	private StringMap<AutoGame> games = new StringMap<AutoGame>();
 	private StringMap<GameMap> maps = new StringMap<GameMap>();
+	/*
+	 * Player stuff
+	 */
 	private PlayerMap<PlayerState> players = new PlayerMap<PlayerState>(PlayerState.EXTERIOR);
 	private PlayerMap<String> votes = new PlayerMap<String>("");
+	/*
+	 * Active game and active/edited map
+	 */
 	private AutoGame activeGame;
 	private GameMap activeMap, editMap;
+	/*
+	 * Key positions
+	 */
 	private Location lobby, fireworks, welcome;
+	/*
+	 * Heartbeat
+	 */
 	private int tickTaskId = 0;
+	/*
+	 * Status
+	 */
 	private GameState state = GameState.INTERMISSION;
 	private long gameStart = 0L;
+	/*
+	 * Handlers/listeners
+	 */
 	private CommandListener commands;
 	private EventListener events;
 	private GameTicker ticker;
 	private Progression progression;
 	private Players playerManager;
-	private PlayerMap<Hologram> statusHolos = new PlayerMap<Hologram>();
-	private ItemStack holoHoldItem;
+	private HoloHandler holos;
+	/*
+	 * Herochat stuff
+	 */
 	private Channel gameChannel, spectatorChannel;
 	
 	public void onEnable(){
@@ -136,46 +156,54 @@ public class GameMaster extends JavaPlugin{
 			e.printStackTrace();
 		}
 		/*
-		 * Register statistics
+		 * StatMaster
 		 */
-		StatMaster.getHandler().registerStat(new Statistic("Wins", 0, "games", "default"));
-		StatMaster.getHandler().registerStat(new Statistic("Losses", 0, "games", "default"));
-		StatMaster.getHandler().registerCommunityStat(new Statistic("Big games", 0));
-		StatMaster.getHandler().registerCommunityStat(new Statistic("Votes", 0));
-		/*
-		 * Set up hologram stuff
-		 */
-		holoHoldItem = new ItemStack(Material.PAPER);
-		ItemMeta meta = holoHoldItem.getItemMeta();
-		meta.setDisplayName(ChatColor.DARK_RED + "Game Status");
-		meta.setLore(Lists.newArrayList(ChatColor.GOLD + "Hold to view game status"));
-		holoHoldItem.setItemMeta(meta);
-		Bukkit.getScheduler().runTaskTimer(this, new Runnable(){
-			
-			public void run(){
-				for(Player player : Bukkit.getOnlinePlayers())
-					moveStatusHolo(player);
-			}
-		}, 0L, 1L);
-		/*
-		 * Set up Herochat stuff
-		 */
-		ChannelManager hc = Herochat.getChannelManager();
-		gameChannel = getConfig().getBoolean("wrap-server")
-						? hc.getDefaultChannel()
-						: hc.getChannel("gamemaster");
-		if(gameChannel == null){
-			gameChannel = new StandardChannel(hc.getStorage(), "gamemaster", "gm", hc.getDefaultChannel().getFormatSupplier());
-			gameChannel.setColor(ChatColor.WHITE);
-			gameChannel.setVerbose(false);
-			hc.addChannel(gameChannel);
+		if(Depend.hasStatMaster()){
+			Depend.getStats().registerStat(new Statistic("Wins", 0, "games", "default"));
+			Depend.getStats().registerStat(new Statistic("Losses", 0, "games", "default"));
 		}
-		spectatorChannel = hc.getChannel("spectator");
-		if(spectatorChannel == null){
-			spectatorChannel = new StandardChannel(hc.getStorage(), "spectator", "spc", hc.getDefaultChannel().getFormatSupplier());
-			spectatorChannel.setColor(ChatColor.GRAY);
-			spectatorChannel.setVerbose(false);
-			hc.addChannel(spectatorChannel);
+		/*
+		 * Votifier
+		 */
+		if(Depend.hasVotifier())
+			Bukkit.getPluginManager().registerEvents(new VotifierListener(this), this);
+		/*
+		 * Holograms
+		 */
+		if(Depend.hasHolograms()){
+			holos = new HoloHandler(this);
+			Bukkit.getScheduler().runTaskTimer(this, new Runnable(){ public void run(){
+				for(Player player : Bukkit.getOnlinePlayers())
+					holos.moveStatusHolo(player);
+			}}, 0L, 1L);
+		}
+		/*
+		 * KitMaster
+		 */
+		if(Depend.hasKitMaster())
+			Bukkit.getPluginManager().registerEvents(new KitMasterListener(this), this);
+		/*
+		 * Herochat
+		 */
+		if(Depend.hasHerochat()){
+			Bukkit.getPluginManager().registerEvents(new HerochatListener(this), this);
+			ChannelManager hc = Herochat.getChannelManager();
+			gameChannel = getConfig().getBoolean("wrap-server")
+				? hc.getDefaultChannel()
+					: hc.getChannel("gamemaster");
+				if(gameChannel == null){
+					gameChannel = new StandardChannel(hc.getStorage(), "gamemaster", "gm", hc.getDefaultChannel().getFormatSupplier());
+					gameChannel.setColor(ChatColor.WHITE);
+					gameChannel.setVerbose(false);
+					hc.addChannel(gameChannel);
+				}
+				spectatorChannel = hc.getChannel("spectator");
+				if(spectatorChannel == null){
+					spectatorChannel = new StandardChannel(hc.getStorage(), "spectator", "spc", hc.getDefaultChannel().getFormatSupplier());
+					spectatorChannel.setColor(ChatColor.GRAY);
+					spectatorChannel.setVerbose(false);
+					hc.addChannel(spectatorChannel);
+				}
 		}
 		/*
 		 * Start the ticker
@@ -512,30 +540,30 @@ public class GameMaster extends JavaPlugin{
 		 */
 		if(newState == PlayerState.PLAYING)
 			player.setGameMode(GameMode.SURVIVAL);
-		if(newState == PlayerState.WATCHING){
+		if(newState == PlayerState.WATCHING)
 			player.setGameMode(GameMode.CREATIVE);
-			player.getInventory().addItem(getHoloItem());
-		}
 		/*
 		 * TODO Update chat channels
 		 */
-		Chatter chatter = Herochat.getChatterManager().addChatter(player);
-		if(newState == PlayerState.PLAYING){
-			chatter.addChannel(gameChannel, false, true);
-			chatter.setActiveChannel(gameChannel, false, true);
-			chatter.removeChannel(spectatorChannel, false, true);
-		}
-		if(newState == PlayerState.WATCHING){
-			chatter.addChannel(gameChannel, false, true);
-			chatter.addChannel(spectatorChannel, false, true);
-			chatter.setActiveChannel(spectatorChannel, false, true);
-		}
-		if(newState == PlayerState.EXTERIOR){
-			if(getConfig().getBoolean("wrap-server"))
+		if(Depend.hasHerochat()){
+			Chatter chatter = Herochat.getChatterManager().addChatter(player);
+			if(newState == PlayerState.PLAYING){
 				chatter.addChannel(gameChannel, false, true);
-			else
-				chatter.removeChannel(gameChannel, false, true);
-			chatter.removeChannel(spectatorChannel, false, true);
+				chatter.setActiveChannel(gameChannel, false, true);
+				chatter.removeChannel(spectatorChannel, false, true);
+			}
+			if(newState == PlayerState.WATCHING){
+				chatter.addChannel(gameChannel, false, true);
+				chatter.addChannel(spectatorChannel, false, true);
+				chatter.setActiveChannel(spectatorChannel, false, true);
+			}
+			if(newState == PlayerState.EXTERIOR){
+				if(getConfig().getBoolean("wrap-server"))
+					chatter.addChannel(gameChannel, false, true);
+				else
+					chatter.removeChannel(gameChannel, false, true);
+				chatter.removeChannel(spectatorChannel, false, true);
+			}
 		}
 		/*
 		 * Update visibilities
@@ -717,54 +745,6 @@ public class GameMaster extends JavaPlugin{
 		progression.intermission();
 	}
 	
-	protected void sendStatusHolo(CommandSender sender){
-		final Player player = sender instanceof Player ? (Player) sender : null;
-		List<String> status = Lists.newArrayList();
-		if(getState() != GameState.INTERMISSION){
-			status.add(new Message(Scheme.HIGHLIGHT).t("Playing ").t(getActiveGame()).s().t(" on ").t(getActiveMap()).s().getText());
-			if(getActiveGame() instanceof TeamAutoGame && player != null && getState(player) == PlayerState.PLAYING){
-				Team team = ((TeamAutoGame) getActiveGame()).getTeam(player);
-				status.add(new Message(Scheme.HIGHLIGHT).t("You're on the ").t(team).color(team.chat).t(" team").getText());
-			}
-			for(Object msg : getActiveGame().getStatusMessages(player))
-				if(msg instanceof Message)
-					status.add(((Message) msg).getText());
-				else
-					status.add(String.valueOf(msg));
-			if(getActiveGame() instanceof TimerModule){
-				long millis = ((TimerModule) getActiveGame()).getGameLength() * 60 * 1000 - (System.currentTimeMillis() - getGameStart());
-				int seconds = Math.round(millis / 1000F);
-				int mins = seconds / 60;
-				status.add(new Message(Scheme.NORMAL).t(mins).s().t(" minutes and ").t(seconds % 60).s().t(" seconds remain").getText());
-			}
-		}
-		else
-			status.add(new Message(Scheme.WARNING).t("No game is playing right now").getText());
-		if(player == null)
-			Chat.send(sender, status);
-		else if(!statusHolos.containsKey(player)){
-			Hologram holo = HoloAPI.getManager().createSimpleHologram(Utils.getHoloHudLoc(player), 5, status);
-			holo.clearAllPlayerViews();
-			holo.show(player);
-			statusHolos.put(player, holo);
-			Bukkit.getScheduler().runTaskLater(this, new Runnable(){
-				
-				public void run(){
-					statusHolos.remove(player);
-				}
-			}, 5 * 20);
-		}
-	}
-	
-	protected void moveStatusHolo(Player player){
-		if(statusHolos.containsKey(player))
-			statusHolos.get(player).move(Utils.getHoloHudLoc(player).add(new Vector(0, 0.25 * statusHolos.get(player).getLines().length, 0)));
-	}
-	
-	protected ItemStack getHoloItem(){
-		return holoHoldItem.clone();
-	}
-	
 	/**
 	 * Broadcasts a message to all players involved in the game, i.e. players
 	 * and specatators.
@@ -796,4 +776,57 @@ public class GameMaster extends JavaPlugin{
 	public Channel getSpectatorChannel(){
 		return spectatorChannel;
 	}
+	
+	protected void sendStatus(CommandSender subject){
+		/*
+		 * Generate the hologram message
+		 */
+		List<String> status = Lists.newArrayList();
+		if(getState() != GameState.INTERMISSION){
+			status.add(
+				new Message(Scheme.HIGHLIGHT)
+					.t("Playing ")
+					.t(getActiveGame()).s()
+					.t(" on ")
+					.t(getActiveMap()).s()
+					.getText()
+			);
+			if(getActiveGame() instanceof TeamAutoGame && subject instanceof Player && getState((Player) subject) == PlayerState.PLAYING){
+				Team team = ((TeamAutoGame) getActiveGame()).getTeam((Player) subject);
+				status.add(
+					new Message(Scheme.HIGHLIGHT)
+						.t("You're on the ")
+						.t(team).color(team.chat)
+						.t(" team")
+						.getText()
+				);
+			}
+			for(Object msg : getActiveGame().getStatusMessages(subject instanceof Player ? (Player) subject : null))
+				if(msg instanceof Message)
+					status.add(((Message) msg).getText());
+				else
+					status.add(String.valueOf(msg));
+			if(getActiveGame() instanceof TimerModule){
+				long millis = ((TimerModule) getActiveGame()).getGameLength() * 60 * 1000 - (System.currentTimeMillis() - getGameStart());
+				int seconds = Math.round(millis / 1000F);
+				int mins = seconds / 60;
+				status.add(
+					new Message(Scheme.NORMAL)
+						.t(mins).s()
+						.t(" minutes and ")
+						.t(seconds % 60).s()
+						.t(" seconds remain")
+						.getText()
+				);
+			}
+		}
+		else
+			status.add(new Message(Scheme.WARNING).t("No game is playing right now").getText());
+		
+		if(subject instanceof Player && Depend.hasHolograms())
+			holos.sendHoloMessage((Player) subject, status, 5);
+		else
+			Chat.send(subject, status);
+	}
+	
 }

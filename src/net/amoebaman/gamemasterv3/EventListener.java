@@ -3,7 +3,6 @@ package net.amoebaman.gamemasterv3;
 import java.util.*;
 
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -14,7 +13,6 @@ import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.*;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.ServerListPingEvent;
@@ -23,21 +21,12 @@ import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
-import com.dthielke.herochat.ChannelChatEvent;
-import com.vexsoftware.votifier.model.Vote;
-import com.vexsoftware.votifier.model.VotifierEvent;
-
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.api.TeamAutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
-import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.modules.RespawnModule;
 import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
-import net.amoebaman.kitmaster.enums.GiveKitContext;
-import net.amoebaman.kitmaster.utilities.ClearKitsEvent;
-import net.amoebaman.kitmaster.utilities.GiveKitEvent;
-import net.amoebaman.statmaster.StatMaster;
 import net.amoebaman.utils.chat.Chat;
 import net.amoebaman.utils.chat.Message;
 import net.amoebaman.utils.chat.Scheme;
@@ -47,20 +36,10 @@ import net.minecraft.util.com.google.common.collect.Lists;
 
 public class EventListener implements Listener{
 	
-	private Set<Player> teamChatting = new HashSet<Player>();
-	
 	private GameMaster master;
 	
 	protected EventListener(GameMaster master){
 		this.master = master;
-	}
-	
-	public boolean toggleTeamChat(Player player){
-		if(!teamChatting.remove(player)){
-			teamChatting.add(player);
-			return true;
-		}
-		return false;
 	}
 	
 	@EventHandler
@@ -236,10 +215,10 @@ public class EventListener implements Listener{
 			
 			event.setJoinMessage(
 				new Message(Scheme.HIGHLIGHT)
-					.t(player.getName()).s()
-					.t(" has joined the battle")
-					.toString()
-			);
+				.t(player.getName()).s()
+				.t(" has joined the battle")
+				.toString()
+				);
 			
 			Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
 				if(master.getState() == GameState.INTERMISSION){
@@ -277,18 +256,18 @@ public class EventListener implements Listener{
 				player.teleport(master.getWelcome());
 				event.setJoinMessage(
 					new Message(Scheme.HIGHLIGHT)
-						.t(player.getName()).s()
-						.t(" has joined the server for the first time!  Everybody give them a huge welcome!")
-						.toString()
-				);
+					.t(player.getName()).s()
+					.t(" has joined the server for the first time!  Everybody give them a huge welcome!")
+					.toString()
+					);
 				Bukkit.getScheduler().runTask(master, new Runnable(){ public void run(){
 					new Message(Scheme.HIGHLIGHT)
-						.t("In total, ")
-						.t(Bukkit.getOfflinePlayers().length + " unique players").s()
-						.t(" have joined the server!")
-						.broadcast();
+					.t("In total, ")
+					.t(Bukkit.getOfflinePlayers().length + " unique players").s()
+					.t(" have joined the server!")
+					.broadcast();
 				}});
-		}
+			}
 			/*
 			 * Otherwise, just shove them headfirst into the games
 			 */
@@ -306,13 +285,13 @@ public class EventListener implements Listener{
 	public void playerQuit(PlayerQuitEvent event){
 		if(master.getConfig().getBoolean("wrap-server", false)){
 			Player player = event.getPlayer();
-
+			
 			event.setQuitMessage(
 				new Message(Scheme.HIGHLIGHT)
-					.t(player.getName()).s()
-					.t(" has left the battle")
-					.toString()
-			);
+				.t(player.getName()).s()
+				.t(" has left the battle")
+				.toString()
+				);
 			
 			StatusBar.removeStatusBar(player);
 			if(master.getState() != GameState.INTERMISSION && master.getState(player) == PlayerState.PLAYING){
@@ -327,13 +306,13 @@ public class EventListener implements Listener{
 	public void playerKick(PlayerKickEvent event){
 		if(master.getConfig().getBoolean("wrap-server", false)){
 			Player player = event.getPlayer();
-
+			
 			event.setLeaveMessage(
 				new Message(Scheme.HIGHLIGHT)
-					.t(player.getName()).s()
-					.t(" has fled the battle")
-					.toString()
-			);
+				.t(player.getName()).s()
+				.t(" has fled the battle")
+				.toString()
+				);
 			
 			playerQuit(new PlayerQuitEvent(player, "redirect"));
 		}
@@ -402,90 +381,7 @@ public class EventListener implements Listener{
 				event.setMotd(new Message(Scheme.HIGHLIGHT).t("Playing ").t(master.getActiveGame()).s().t(" on ").t(master.getActiveMap()).s().toString());
 		}
 	}
-	
-	@EventHandler
-	public void killProjectilesOnKitChange(ClearKitsEvent event){
-		Player player = event.getPlayer();
-		if(master.getState(player) != PlayerState.EXTERIOR)
-			for(Projectile proj : player.getWorld().getEntitiesByClass(Projectile.class))
-				if(player.equals(proj.getShooter()))
-					proj.remove();
-	}
-	
-	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
-	public void restrictCommandKitsToSpawns(GiveKitEvent event){
-		final Player player = event.getPlayer();
-		if(master.getState(player) == PlayerState.PLAYING && master.getState() == GameState.RUNNING){
-			if(master.getActiveGame() instanceof SafeSpawnModule){
-				SafeSpawnModule game = (SafeSpawnModule) master.getActiveGame();
-				if(player.getLocation().distance(game.getSafeLoc(player)) > game.getSafeRadius(player))
-					if(!event.getContext().overrides && event.getContext() != GiveKitContext.SIGN_TAKEN && !player.hasPermission("gamemaster.globalkit")){
-						new Message(Scheme.WARNING)
-						.then("You must be in your spawn to take kits via command")
-						.send(player);
-						event.setCancelled(true);
-					}
-			}
-			if(!event.isCancelled() && event.getContext() != GiveKitContext.PARENT_GIVEN)
-				Bukkit.getScheduler().scheduleSyncDelayedTask(master, new Runnable(){ public void run(){
-					player.getInventory().addItem(master.getHoloItem());
-				}});
-		}
-	}
-	
-	@EventHandler(priority=EventPriority.HIGHEST, ignoreCancelled=true)
-	public void forbidChestStorage(InventoryClickEvent event){
-		Player player = (Player) event.getWhoClicked();
-		if(master.getState(player) != PlayerState.EXTERIOR && event.getView().getTopInventory() != null)
-			switch(event.getView().getTopInventory().getType()){
-				case CRAFTING: case CREATIVE: case PLAYER:
-					event.setCancelled(false);
-					break;
-				default:
-					event.setCancelled(true);
-					break;
-			}
-	}
-	
-	@EventHandler
-	public void chatManagement(ChannelChatEvent event){
-		Player player = event.getSender().getPlayer();
-		if(master.getState(player) == PlayerState.PLAYING){
-			event.setChannel(master.getMainChannel());
-			if(teamChatting.contains(player) && master.getState() != GameState.INTERMISSION && master.getActiveGame() instanceof TeamAutoGame){
-				TeamAutoGame game = (TeamAutoGame) master.getActiveGame();
-				Team team = game.getTeam(player);
-				event.setChannel(game.getChannel(team));
-			}
-		}
-		if(master.getState(player) == PlayerState.WATCHING)
-			event.setChannel(master.getSpectatorChannel());
-	}
-	
-	@EventHandler
-	public void votifier(VotifierEvent event){
-		Vote vote = event.getVote();
-		if(vote == null){
-			master.log("VotifierEvent returned null vote");
-			return;
-		}
-		master.log("Received vote from " + vote.getServiceName() + " by " + vote.getUsername() + " from " + vote.getAddress() + " at " + vote.getTimeStamp());
-		OfflinePlayer player = Bukkit.getPlayer(vote.getUsername());
-		if(player == null)
-			player = Bukkit.getOfflinePlayer(vote.getUsername());
-		if(player.hasPlayedBefore() || player.isOnline()){
-			StatMaster.getHandler().incrementStat(player, "charges");
-			StatMaster.getHandler().incrementCommunityStat("votes");
-			master.broadcast(
-				new Message(Scheme.HIGHLIGHT)
-				.t(player.getName()).s()
-				.t(" voted for the server, and now has ")
-				.t(StatMaster.getHandler().getStat(player, "charges")).s()
-				.t(" charges")
-				);
-		}
-	}
-	
+		
 	private Map<UUID, List<PotionEffect>> thrownEffects = new HashMap<UUID, List<PotionEffect>>();
 	@EventHandler
 	public void logPotionThrows(ProjectileLaunchEvent event){
@@ -522,7 +418,7 @@ public class EventListener implements Listener{
 			PotionEffectType.SLOW_DIGGING,
 			PotionEffectType.WEAKNESS,
 			PotionEffectType.WITHER
-		);
+			);
 		List<PotionEffect> effects = thrownEffects.remove(potion.getUniqueId());
 		for(PotionEffect effect : effects)
 			if(harms.contains(effect.getType()))
@@ -542,17 +438,6 @@ public class EventListener implements Listener{
 					if(tester.isCancelled())
 						event.setIntensity(victim, 0);
 				}
-	}
-	
-	/*
-	 * TODO make this a right-click event
-	 */
-	@EventHandler
-	public void holoHoldItems(PlayerItemHeldEvent event){
-		Player player = event.getPlayer();
-		ItemStack newItem = player.getInventory().getItem(event.getNewSlot());
-		if(master.getHoloItem().isSimilar(newItem))
-			master.sendStatusHolo(player);
 	}
 	
 	@EventHandler

@@ -2,8 +2,7 @@ main: net.amoebaman.gamemasterv3.GameMaster
 
 name: GameMaster
 version: 3.0
-depend: [KitMaster, StatMaster, Herochat]
-loadbefore: [CommandBook]
+softdepend: [Votifier, Herochat, Vault, StatMaster, KitMaster]
 author: AmoebaMan
 description: Schedules and runs autonomous events/minigames
 
@@ -17,7 +16,7 @@ commands:
     aliases: [v, votenext]
     description: Votes for the next game
     usage: /votenext <game>
-  charges:
+  charge:
     aliases: [c, charge]
     description: Shows information about charges
     usage: /charges [sub-cmd]
