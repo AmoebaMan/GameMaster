@@ -1,7 +1,7 @@
 main: net.amoebaman.gamemasterv3.GameMaster
 
 name: GameMaster
-version: 3.0
+version: 3.1
 softdepend: [Votifier, Herochat, Vault, StatMaster, KitMaster]
 author: AmoebaMan
 description: Schedules and runs autonomous events/minigames
