@@ -40,7 +40,6 @@ public abstract class TeamAutoGame extends AutoGame{
 	private static boolean balance = true;
 	private DefaultedMap<Team, Integer> scores = new DefaultedMap<Team, Integer>(0);
 	private PlayerMap<Team> teams = new PlayerMap<Team>();
-	private Map<Team, Channel> channels;
 	
 	/**
 	 * Gets whether or not team balancing is currently enabled.
@@ -154,13 +153,11 @@ public abstract class TeamAutoGame extends AutoGame{
 			team.getBukkitTeam().addPlayer(player);
 		}
 		if(Depend.hasHerochat()){
-			if(channels == null)
-				channels = new HashMap<Team, Channel>();
 			Chatter chatter = Herochat.getChatterManager().addChatter(player);		
-			for(Channel chan : channels.values())
-				chatter.removeChannel(chan, false, true);
+			for(Team each : Team.values())
+				chatter.removeChannel(master.getHerochatHandler().getTeamChannel(each), false, true);
 			if(team != null)
-				chatter.addChannel(getChannel(team), false, true);
+				chatter.addChannel(master.getHerochatHandler().getTeamChannel(team), false, true);
 		}
 	}
 	
@@ -176,31 +173,6 @@ public abstract class TeamAutoGame extends AutoGame{
 			if(getTeam(each) == team)
 				set.add(each);
 		return set;
-	}
-	
-	/**
-	 * Gets the chat channel reserved for this team's private communications.
-	 * 
-	 * @param team a team
-	 * @return the team's chat channel
-	 */
-	public Channel getChannel(Team team){
-		if(team == null)
-			return master.getMainChannel();
-		else{
-			if(!channels.containsKey(team)){
-				ChannelManager hc = Herochat.getChannelManager();
-				Channel teamChannel = hc.getChannel(team + "Team");
-				if(teamChannel == null){
-					teamChannel = new StandardChannel(hc.getStorage(), team + "Team", team.toString(), hc.getDefaultChannel().getFormatSupplier());
-					teamChannel.setColor(team.chat);
-					teamChannel.setVerbose(false);
-					hc.addChannel(teamChannel);
-				}
-				channels.put(team, teamChannel);
-			}
-			return channels.get(team);
-		}
 	}
 	
 	/**

@@ -18,7 +18,7 @@ import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.softdepend.Depend;
-import net.amoebaman.gamemasterv3.softdepend.HerochatListener;
+import net.amoebaman.gamemasterv3.softdepend.HerochatHandler;
 import net.amoebaman.gamemasterv3.util.PropertySet;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.kitmaster.controllers.ItemController;
@@ -249,7 +249,7 @@ public class CommandListener{
 		if(Depend.hasHerochat())
 			return new Message(Scheme.NORMAL)
 				.then("Team-exclusive chatting is ")
-				.then(HerochatListener.toggleTeamChat(player) ? "enabled" : "disabled").strong();
+				.then(master.getHerochatHandler().toggleTeamChat(player) ? "enabled" : "disabled").strong();
 		else
 			return new Message(Scheme.ERROR)
 				.then("Team chat is not available");

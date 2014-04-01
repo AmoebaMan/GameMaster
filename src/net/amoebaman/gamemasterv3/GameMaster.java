@@ -1,6 +1,7 @@
 package net.amoebaman.gamemasterv3;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -91,13 +92,11 @@ public class GameMaster extends JavaPlugin{
 	private Progression progression;
 	private Players playerManager;
 	private HoloHandler holos;
-	/*
-	 * Herochat stuff
-	 */
-	private Channel gameChannel, spectatorChannel;
+	private HerochatHandler chat;
 	
 	public void onEnable(){
 		INSTANCE = this;
+		log("Tester");
 		/*
 		 * Set up components
 		 */
@@ -186,24 +185,8 @@ public class GameMaster extends JavaPlugin{
 		 * Herochat
 		 */
 		if(Depend.hasHerochat()){
-			Bukkit.getPluginManager().registerEvents(new HerochatListener(this), this);
-			ChannelManager hc = Herochat.getChannelManager();
-			gameChannel = getConfig().getBoolean("wrap-server")
-				? hc.getDefaultChannel()
-					: hc.getChannel("gamemaster");
-				if(gameChannel == null){
-					gameChannel = new StandardChannel(hc.getStorage(), "gamemaster", "gm", hc.getDefaultChannel().getFormatSupplier());
-					gameChannel.setColor(ChatColor.WHITE);
-					gameChannel.setVerbose(false);
-					hc.addChannel(gameChannel);
-				}
-				spectatorChannel = hc.getChannel("spectator");
-				if(spectatorChannel == null){
-					spectatorChannel = new StandardChannel(hc.getStorage(), "spectator", "spc", hc.getDefaultChannel().getFormatSupplier());
-					spectatorChannel.setColor(ChatColor.GRAY);
-					spectatorChannel.setVerbose(false);
-					hc.addChannel(spectatorChannel);
-				}
+			chat = new HerochatHandler(this);
+			Bukkit.getPluginManager().registerEvents(chat, this);
 		}
 		/*
 		 * Start the ticker
@@ -277,6 +260,17 @@ public class GameMaster extends JavaPlugin{
 	 */
 	public static GameMaster getMaster(){
 		return INSTANCE;
+	}
+	
+	public void addConfigValue(String path, Object value){
+		getConfig().addDefault(path, value);
+		getConfig().options().copyDefaults(true);
+		try{
+	        getConfig().save(configFile);
+        }
+        catch(IOException e){
+	        e.printStackTrace();
+        }
 	}
 	
 	protected Collection<AutoGame> getGames(){
@@ -474,6 +468,14 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	/**
+	 * Gets the Herochat handler.
+	 * @return the Herochat handler
+	 */
+	public HerochatHandler getHerochatHandler(){
+		return chat;
+	}
+	
+	/**
 	 * Gets the current state of the game. See {@link GameState}.
 	 * 
 	 * @return the state
@@ -511,6 +513,8 @@ public class GameMaster extends JavaPlugin{
 	}
 	
 	protected void setState(Player player, PlayerState newState){
+		if(players.get(player) == newState)
+			return;
 		/*
 		 * Update the state on record
 		 */
@@ -548,21 +552,21 @@ public class GameMaster extends JavaPlugin{
 		if(Depend.hasHerochat()){
 			Chatter chatter = Herochat.getChatterManager().addChatter(player);
 			if(newState == PlayerState.PLAYING){
-				chatter.addChannel(gameChannel, false, true);
-				chatter.setActiveChannel(gameChannel, false, true);
-				chatter.removeChannel(spectatorChannel, false, true);
+				chatter.addChannel(chat.getMainChannel(), false, true);
+				chatter.setActiveChannel(chat.getMainChannel(), false, true);
+				chatter.removeChannel(chat.getSpectatorChannel(), false, true);
 			}
 			if(newState == PlayerState.WATCHING){
-				chatter.addChannel(gameChannel, false, true);
-				chatter.addChannel(spectatorChannel, false, true);
-				chatter.setActiveChannel(spectatorChannel, false, true);
+				chatter.addChannel(chat.getMainChannel(), false, true);
+				chatter.addChannel(chat.getSpectatorChannel(), false, true);
+				chatter.setActiveChannel(chat.getSpectatorChannel(), false, true);
 			}
 			if(newState == PlayerState.EXTERIOR){
 				if(getConfig().getBoolean("wrap-server"))
-					chatter.addChannel(gameChannel, false, true);
+					chatter.addChannel(chat.getMainChannel(), false, true);
 				else
-					chatter.removeChannel(gameChannel, false, true);
-				chatter.removeChannel(spectatorChannel, false, true);
+					chatter.removeChannel(chat.getMainChannel(), false, true);
+				chatter.removeChannel(chat.getSpectatorChannel(), false, true);
 			}
 		}
 		/*
@@ -756,25 +760,6 @@ public class GameMaster extends JavaPlugin{
 			if(getConfig().getBoolean("wrap-server") || getState(player) != PlayerState.EXTERIOR)
 				Chat.send(player, messages);
 		Chat.send(Bukkit.getConsoleSender(), messages);
-	}
-	
-	/**
-	 * Gets the main channel that all players not in team chat will chat in.
-	 * 
-	 * @return the main channel
-	 */
-	public Channel getMainChannel(){
-		return gameChannel;
-	}
-	
-	/**
-	 * Gets the chat channel reserved for spectators (to avoid players hearing
-	 * specatator chatter).
-	 * 
-	 * @return the spectator channel
-	 */
-	public Channel getSpectatorChannel(){
-		return spectatorChannel;
 	}
 	
 	protected void sendStatus(CommandSender subject){
