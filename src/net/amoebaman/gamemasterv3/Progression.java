@@ -15,10 +15,10 @@ import net.amoebaman.gamemasterv3.api.GameMap;
 import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.softdepend.Depend;
 import net.amoebaman.kitmaster.Actions;
-import net.amoebaman.utils.GenUtil;
-import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.Message;
-import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.amoebautils.AmoebaUtils;
+import net.amoebaman.amoebautils.chat.Chat;
+import net.amoebaman.amoebautils.chat.Message;
+import net.amoebaman.amoebautils.chat.Scheme;
 
 public class Progression{
 	
@@ -142,7 +142,7 @@ public class Progression{
 		 */
 		AutoGame mostVoted = master.getGame(master.getMostVoted());
 		if(mostVoted == null){
-			master.setActiveGame(GenUtil.getRandomElement(master.getGames()));
+			master.setActiveGame(AmoebaUtils.getRandomElement(master.getGames()));
 			new Message(Scheme.HIGHLIGHT).then("No votes were cast - randomly choosing a game").broadcast();
 		}
 		else
@@ -173,7 +173,7 @@ public class Progression{
 		 */
 		GameMap mostVoted = master.getMap(master.getMostVoted());
 		if(mostVoted == null){
-			master.setActiveMap(GenUtil.getRandomElement(master.getMaps(master.getActiveGame())));
+			master.setActiveMap(AmoebaUtils.getRandomElement(master.getMaps(master.getActiveGame())));
 			new Message(Scheme.HIGHLIGHT).then("No votes were cast - randomly choosing a map").broadcast();
 		}
 		else

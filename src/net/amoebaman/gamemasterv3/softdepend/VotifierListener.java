@@ -9,8 +9,8 @@ import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 
 import net.amoebaman.gamemasterv3.GameMaster;
-import net.amoebaman.utils.chat.Message;
-import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.amoebautils.chat.Message;
+import net.amoebaman.amoebautils.chat.Scheme;
 
 import net.milkbowl.vault.economy.Economy;
 

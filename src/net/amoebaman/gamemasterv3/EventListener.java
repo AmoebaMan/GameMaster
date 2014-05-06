@@ -27,10 +27,10 @@ import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.gamemasterv3.modules.RespawnModule;
 import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
-import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.Message;
-import net.amoebaman.utils.chat.Scheme;
-import net.amoebaman.utils.nms.StatusBar;
+import net.amoebaman.amoebautils.chat.Chat;
+import net.amoebaman.amoebautils.chat.Message;
+import net.amoebaman.amoebautils.chat.Scheme;
+import net.amoebaman.amoebautils.nms.StatusBar;
 
 import net.minecraft.util.com.google.common.collect.Lists;
 

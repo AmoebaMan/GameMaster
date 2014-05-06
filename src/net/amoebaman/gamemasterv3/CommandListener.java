@@ -18,7 +18,6 @@ import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
 import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.softdepend.Depend;
-import net.amoebaman.gamemasterv3.softdepend.HerochatHandler;
 import net.amoebaman.gamemasterv3.util.PropertySet;
 import net.amoebaman.kitmaster.Actions;
 import net.amoebaman.kitmaster.controllers.ItemController;
@@ -26,12 +25,12 @@ import net.amoebaman.kitmaster.enums.Attribute;
 import net.amoebaman.kitmaster.handlers.HistoryHandler;
 import net.amoebaman.kitmaster.handlers.KitHandler;
 import net.amoebaman.kitmaster.objects.Kit;
-import net.amoebaman.utils.CommandController.CommandHandler;
-import net.amoebaman.utils.GenUtil;
-import net.amoebaman.utils.chat.Align;
-import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.Message;
-import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.amoebautils.CommandController.CommandHandler;
+import net.amoebaman.amoebautils.AmoebaUtils;
+import net.amoebaman.amoebautils.chat.Align;
+import net.amoebaman.amoebautils.chat.Chat;
+import net.amoebaman.amoebautils.chat.Message;
+import net.amoebaman.amoebautils.chat.Scheme;
 
 import net.milkbowl.vault.economy.Economy;
 import net.minecraft.util.com.google.common.collect.Lists;
@@ -52,7 +51,7 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "vote")
 	public Object voteCmd(Player player, String[] args){
-		String vote = GenUtil.concat(Lists.newArrayList(args), "", " ", "");
+		String vote = AmoebaUtils.concat(Lists.newArrayList(args), "", " ", "");
 		if(master.getState() == GameState.INTERMISSION){
 			if(master.getActiveGame() == null){
 				/*
@@ -388,7 +387,7 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "game-map create")
 	public Object mapCreateCmd(CommandSender sender, String[] args){
-		String name = GenUtil.concat(Lists.newArrayList(args), "", " ", "");
+		String name = AmoebaUtils.concat(Lists.newArrayList(args), "", " ", "");
 		if(name.isEmpty())
 			return new Message(Scheme.ERROR).t("Include the name of the new map");
 		if(master.getEditMap() != null)
@@ -402,7 +401,7 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "game-map edit")
 	public Object mapEditCmd(CommandSender sender, String[] args){
-		String name = GenUtil.concat(Lists.newArrayList(args), "", " ", "");
+		String name = AmoebaUtils.concat(Lists.newArrayList(args), "", " ", "");
 		if(name.isEmpty())
 			return new Message(Scheme.ERROR).t("Include the name of the map to edit");
 		if(master.getEditMap() != null)
@@ -456,13 +455,13 @@ public class CommandListener{
 	
 	@CommandHandler(cmd = "game-map list")
 	public Object mapListCmd(CommandSender sender, String[] args){
-		new Message(Scheme.NORMAL).t("Maps: ").s().t(Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps()), "&x", "&z, &x", ""), Scheme.NORMAL)).send(sender);
+		new Message(Scheme.NORMAL).t("Maps: ").s().t(Chat.format(AmoebaUtils.concat(AmoebaUtils.objectsToStrings(master.getMaps()), "&x", "&z, &x", ""), Scheme.NORMAL)).send(sender);
 		if(master.getEditMap() != null)
 			new Message(Scheme.NORMAL).t("Editing: ").s().t(master.getEditMap()).send(sender);
 		if(args.length > 0){
 			AutoGame game = master.getGame(args[0]);
 			if(game != null)
-				new Message(Scheme.NORMAL).t("Compatible with ").t(game).s().t(": " + Chat.format(GenUtil.concat(GenUtil.objectsToStrings(master.getMaps(game)), "&x", "&z, &x", ""), Scheme.NORMAL)).send(sender);
+				new Message(Scheme.NORMAL).t("Compatible with ").t(game).s().t(": " + Chat.format(AmoebaUtils.concat(AmoebaUtils.objectsToStrings(master.getMaps(game)), "&x", "&z, &x", ""), Scheme.NORMAL)).send(sender);
 		}
 		return null;
 	}
@@ -483,7 +482,7 @@ public class CommandListener{
 			return new Message(Scheme.ERROR).t("Include a team to add");
 		Team newTeam = Team.getByString(args[0]);
 		if(newTeam == null)
-			return new Message(Scheme.ERROR).t("Invalid team...choose from: ").t(Chat.format(GenUtil.concat(Lists.newArrayList(Team.values()), "&z", "&x, &z", ""), Scheme.WARNING));
+			return new Message(Scheme.ERROR).t("Invalid team...choose from: ").t(Chat.format(AmoebaUtils.concat(Lists.newArrayList(Team.values()), "&z", "&x, &z", ""), Scheme.WARNING));
 		List<String> teams = master.getEditMap().getProperties().getStringList("active-teams");
 		for(String team : teams)
 			if(Team.getByString(team) == newTeam)
@@ -501,7 +500,7 @@ public class CommandListener{
 			return new Message(Scheme.ERROR).t("Include a team to remove");
 		Team oldTeam = Team.getByString(args[0]);
 		if(oldTeam == null)
-			return new Message(Scheme.ERROR).t("Invalid team...choose from: ").t(Chat.format(GenUtil.concat(Lists.newArrayList(Team.values()), "&z", "&x, &z", ""), Scheme.WARNING));
+			return new Message(Scheme.ERROR).t("Invalid team...choose from: ").t(Chat.format(AmoebaUtils.concat(Lists.newArrayList(Team.values()), "&z", "&x, &z", ""), Scheme.WARNING));
 		List<String> teams = master.getEditMap().getProperties().getStringList("active-teams");
 		boolean success = teams.remove(oldTeam.name()) || teams.remove(oldTeam.name().toLowerCase());
 		master.getEditMap().getProperties().set("active-teams", teams);
@@ -519,7 +518,7 @@ public class CommandListener{
 			return new Message(Scheme.ERROR).t("Include the team to set the spawn of");
 		Team team = Team.getByString(args[0]);
 		if(team == null)
-			return new Message(Scheme.ERROR).t("Invalid team...choose from: ").t(Chat.format(GenUtil.concat(Lists.newArrayList(Team.values()), "&z", "&x, &z", ""), Scheme.WARNING));
+			return new Message(Scheme.ERROR).t("Invalid team...choose from: ").t(Chat.format(AmoebaUtils.concat(Lists.newArrayList(Team.values()), "&z", "&x, &z", ""), Scheme.WARNING));
 		Location loc = player.getLocation();
 		loc.setX(loc.getBlockX() + 0.5);
 		loc.setY(loc.getBlockY() + 0.5);

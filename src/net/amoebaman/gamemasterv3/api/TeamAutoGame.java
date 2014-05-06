@@ -21,10 +21,10 @@ import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
 import net.amoebaman.gamemasterv3.modules.TimerModule;
 import net.amoebaman.gamemasterv3.softdepend.Depend;
 import net.amoebaman.gamemasterv3.util.Utils;
-import net.amoebaman.utils.GenUtil;
-import net.amoebaman.utils.chat.*;
-import net.amoebaman.utils.maps.DefaultedMap;
-import net.amoebaman.utils.maps.PlayerMap;
+import net.amoebaman.amoebautils.AmoebaUtils;
+import net.amoebaman.amoebautils.chat.*;
+import net.amoebaman.amoebautils.maps.DefaultedMap;
+import net.amoebaman.amoebautils.maps.PlayerMap;
 
 import net.milkbowl.vault.economy.Economy;
 
@@ -272,7 +272,7 @@ public abstract class TeamAutoGame extends AutoGame{
 					/*
 					 * Move a random player
 					 */
-					changeTeam(GenUtil.getRandomElement(getPlayers(team)));
+					changeTeam(AmoebaUtils.getRandomElement(getPlayers(team)));
 				}
 			}
 	}
@@ -295,7 +295,7 @@ public abstract class TeamAutoGame extends AutoGame{
 				leastPlayers = getSize(mostNeedy);
 			}
 		if(mostNeedy == null)
-			mostNeedy = GenUtil.getRandomElement(getActiveTeams(master.getActiveMap()));
+			mostNeedy = AmoebaUtils.getRandomElement(getActiveTeams(master.getActiveMap()));
 		/*
 		 * Swap 'em
 		 */

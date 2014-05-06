@@ -32,14 +32,14 @@ import net.amoebaman.gamemasterv3.enums.Team;
 import net.amoebaman.gamemasterv3.modules.TimerModule;
 import net.amoebaman.gamemasterv3.softdepend.*;
 import net.amoebaman.statmaster.Statistic;
-import net.amoebaman.utils.CommandController;
-import net.amoebaman.utils.S_Loc;
-import net.amoebaman.utils.chat.Chat;
-import net.amoebaman.utils.chat.Message;
-import net.amoebaman.utils.chat.Scheme;
-import net.amoebaman.utils.maps.PlayerMap;
-import net.amoebaman.utils.maps.StringMap;
-import net.amoebaman.utils.nms.StatusBar;
+import net.amoebaman.amoebautils.CommandController;
+import net.amoebaman.amoebautils.S_Loc;
+import net.amoebaman.amoebautils.chat.Chat;
+import net.amoebaman.amoebautils.chat.Message;
+import net.amoebaman.amoebautils.chat.Scheme;
+import net.amoebaman.amoebautils.maps.PlayerMap;
+import net.amoebaman.amoebautils.maps.StringMap;
+import net.amoebaman.amoebautils.nms.StatusBar;
 
 import net.minecraft.util.com.google.common.collect.Lists;
 

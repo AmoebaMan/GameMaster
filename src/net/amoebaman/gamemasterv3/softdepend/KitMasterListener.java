@@ -14,8 +14,8 @@ import net.amoebaman.gamemasterv3.modules.SafeSpawnModule;
 import net.amoebaman.kitmaster.enums.GiveKitContext;
 import net.amoebaman.kitmaster.utilities.ClearKitsEvent;
 import net.amoebaman.kitmaster.utilities.GiveKitEvent;
-import net.amoebaman.utils.chat.Message;
-import net.amoebaman.utils.chat.Scheme;
+import net.amoebaman.amoebautils.chat.Message;
+import net.amoebaman.amoebautils.chat.Scheme;
 
 public class KitMasterListener implements Listener{
 	

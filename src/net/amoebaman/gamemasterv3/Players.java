@@ -12,7 +12,7 @@ import org.bukkit.potion.PotionEffect;
 import net.amoebaman.gamemasterv3.api.AutoGame;
 import net.amoebaman.gamemasterv3.enums.GameState;
 import net.amoebaman.gamemasterv3.enums.PlayerState;
-import net.amoebaman.utils.maps.PlayerMap;
+import net.amoebaman.amoebautils.maps.PlayerMap;
 
 /**
  * Component that manages the handling of events and command related to players.

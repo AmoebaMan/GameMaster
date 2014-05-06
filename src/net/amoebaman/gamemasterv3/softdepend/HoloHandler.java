@@ -11,7 +11,7 @@ import com.dsh105.holoapi.api.Hologram;
 
 import net.amoebaman.gamemasterv3.GameMaster;
 import net.amoebaman.gamemasterv3.util.Utils;
-import net.amoebaman.utils.maps.PlayerMap;
+import net.amoebaman.amoebautils.maps.PlayerMap;
 
 public class HoloHandler{
 	

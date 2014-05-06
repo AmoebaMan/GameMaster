@@ -10,7 +10,7 @@ import org.bukkit.World;
 import org.bukkit.configuration.MemoryConfiguration;
 
 import net.amoebaman.gamemasterv3.api.GameMap;
-import net.amoebaman.utils.S_Loc;
+import net.amoebaman.amoebautils.S_Loc;
 
 /**
  * An expansion of a {@link MemoryConfiguration} with additional helpful methods
